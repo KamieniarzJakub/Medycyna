@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 
+
 def bresenham_line(x0, y0, x1, y1):
     points = []
     dx = abs(x1 - x0)
@@ -8,7 +9,7 @@ def bresenham_line(x0, y0, x1, y1):
     sx = 1 if x0 < x1 else -1
     sy = 1 if y0 < y1 else -1
     err = dx - dy
-    
+
     while True:
         points.append((x0, y0))
         if x0 == x1 and y0 == y1:
@@ -20,68 +21,76 @@ def bresenham_line(x0, y0, x1, y1):
         if e2 < dx:
             err += dx
             y0 += sy
-    
+
     return points
+
 
 img = cv2.imread("img/Kropka.jpg", cv2.IMREAD_GRAYSCALE)
 h, w = img.shape
-img = cv2.copyMakeBorder(img, int(max((w-h)/1.4, 0)), int(max((w-h)/1.4, 0)), int(max((h-w)//1.4, 0)), int(max((h-w)/1.4, 0)), cv2.BORDER_CONSTANT, value=[0])
-h, w = img.shape
-print(img.shape)
-angle_step = 4
-n = 360 #Liczba emiterów/detetektorów
-emiters_angles = 180  #Kąt rozposzenia emiterów
-angles = np.arange(0, 360, angle_step)
-sinogram = np.zeros((len(angles), n))
+img = cv2.copyMakeBorder(
+    img,
+    int(max((w - h) / 2, 0)),
+    int(max((w - h) / 2, 0)),
+    int(max((h - w) / 2, 0)),
+    int(max((h - w) / 2, 0)),
+    cv2.BORDER_CONSTANT,
+    value=[0],
+)
+cv2.imshow("source", img)
 
-r = w//2
 
-#Radom
-for a, angle in enumerate(angles):
-    max_value = 0
-    detectors_angles = np.linspace(angle-emiters_angles//2, angle+emiters_angles//2, n)
-    for i, emiter_angle in enumerate(detectors_angles):
-        emiter_angle_rad = np.deg2rad(emiter_angle)
-        detector_angle_rad = np.deg2rad(detectors_angles[n-1-i])
-        x_e = min(r-int(r * np.cos(emiter_angle_rad)), w-1)
-        x_d = min(r-int(r * np.cos(np.pi+detector_angle_rad)), w-1)
-        y_e = min(r-int(r * np.sin(emiter_angle_rad)), h-1)
-        y_d = min(r-int(r * np.sin(np.pi+detector_angle_rad)), h-1)
-        #img[y_e][x_e] = 255
-        #img[y_d][x_d] = 255
+def radon(
+    img,
+    size=None,
+    angle_step=2,
+    n=180,
+    emiters_angles=180,
+    inverse=False,
+):
+    # n - Liczba emiterów/detetektorów
+    # emiters_angles = 180  # Kąt rozposzenia emiterów
+    if size is None:
+        size = img.shape
+    h, w = size
+    r = w // 2
+    angles = np.arange(0, 180, angle_step)
+    if inverse:
+        out = np.zeros(size)
+    else:
+        out = np.zeros((len(angles), n))
 
-        points = bresenham_line(x_e, y_e, x_d, y_d)
-        for x,y in points:
-            sinogram[a][i]+=img[y][x]
-            #img[y][x] = 100
-        
-sinogram /= sinogram.max()
+    for a, angle in enumerate(angles):
+        detectors_angles = np.linspace(
+            angle - emiters_angles // 2, angle + emiters_angles // 2, n
+        )
+        for i, emiter_angle in enumerate(detectors_angles):
+            emiter_angle_rad = np.deg2rad(emiter_angle)
+            detector_angle_rad = np.deg2rad(detectors_angles[n - 1 - i])
+            x_e = min(r - int(r * np.cos(emiter_angle_rad)), w - 1)
+            x_d = min(r - int(r * np.cos(np.pi + detector_angle_rad)), w - 1)
+            y_e = min(r - int(r * np.sin(emiter_angle_rad)), h - 1)
+            y_d = min(r - int(r * np.sin(np.pi + detector_angle_rad)), h - 1)
+            # img[y_e][x_e] = 255
+            # img[y_d][x_d] = 255
 
-#print(sinogram[0][90], max_value)
+            points = bresenham_line(x_e, y_e, x_d, y_d)
+            for x, y in points:
+                if inverse:
+                    out[y][x] += img[a][i]
+                else:
+                    out[a][i] += img[y][x]
+                # img[y][x] = 100
 
+    out /= out.max()
+    return out
+
+
+sinogram = radon(img)
 cv2.imshow("sinogram", sinogram)
 
-#Odwrotny Radom
-tomograf = np.zeros(img.shape) #Rozmiar na suwaki
-for a, angle in enumerate(angles):
-    detectors_angles = np.linspace(angle-emiters_angles//2, angle+emiters_angles//2, n)
-    for i, emiter_angle in enumerate(detectors_angles):
-        emiter_angle_rad = np.deg2rad(emiter_angle)
-        detector_angle_rad = np.deg2rad(detectors_angles[n-1-i])
-        x_e = min(r-int(r * np.cos(emiter_angle_rad)), w-1)
-        x_d = min(r-int(r * np.cos(np.pi+detector_angle_rad)), w-1)
-        y_e = min(r-int(r * np.sin(emiter_angle_rad)), h-1)
-        y_d = min(r-int(r * np.sin(np.pi+detector_angle_rad)), h-1)
-        #img[y_e][x_e] = 255
-        #img[y_d][x_d] = 255
+# Odwrotny Radon
+tomograf = radon(sinogram, inverse=True, size=img.shape)
 
-        points = bresenham_line(x_e, y_e, x_d, y_d)
-        for x,y in points:
-            tomograf[y][x] += sinogram[a][i]
-tomograf /= tomograf.max()
-
-print(tomograf.max())
-#tomograf -=tomograf.max()/4
 
 cv2.imshow("tomograf", tomograf)
 cv2.waitKey()
