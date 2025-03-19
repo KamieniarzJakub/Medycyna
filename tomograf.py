@@ -25,7 +25,7 @@ def bresenham_line(x0, y0, x1, y1):
 
 img = cv2.imread("img/Kropka.jpg", cv2.IMREAD_GRAYSCALE)
 h, w = img.shape
-img = cv2.copyMakeBorder(img, max((w-h)//2, 0), max((w-h)//2, 0), max((h-w)//2, 0), max((h-w)//2, 0), cv2.BORDER_CONSTANT, value=[0])
+img = cv2.copyMakeBorder(img, int(max((w-h)/1.4, 0)), int(max((w-h)/1.4, 0)), int(max((h-w)//1.4, 0)), int(max((h-w)/1.4, 0)), cv2.BORDER_CONSTANT, value=[0])
 h, w = img.shape
 print(img.shape)
 angle_step = 4
@@ -35,9 +35,10 @@ angles = np.arange(0, 360, angle_step)
 sinogram = np.zeros((len(angles), n))
 
 r = w//2
-max_value = 0
+
 #Radom
 for a, angle in enumerate(angles):
+    max_value = 0
     detectors_angles = np.linspace(angle-emiters_angles//2, angle+emiters_angles//2, n)
     for i, emiter_angle in enumerate(detectors_angles):
         emiter_angle_rad = np.deg2rad(emiter_angle)
@@ -53,8 +54,8 @@ for a, angle in enumerate(angles):
         for x,y in points:
             sinogram[a][i]+=img[y][x]
             #img[y][x] = 100
+        
 sinogram /= sinogram.max()
-sinogram*=255
 
 #print(sinogram[0][90], max_value)
 
@@ -78,8 +79,6 @@ for a, angle in enumerate(angles):
         for x,y in points:
             tomograf[y][x] += sinogram[a][i]
 tomograf /= tomograf.max()
-tomograf **= 10
-tomograf *= 255
 
 print(tomograf.max())
 #tomograf -=tomograf.max()/4
