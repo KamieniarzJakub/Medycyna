@@ -28,37 +28,61 @@ h, w = img.shape
 img = cv2.copyMakeBorder(img, max((w-h)//2, 0), max((w-h)//2, 0), max((h-w)//2, 0), max((h-w)//2, 0), cv2.BORDER_CONSTANT, value=[0])
 h, w = img.shape
 print(img.shape)
-angle_step = 2
-n = 180 #Liczba emiterów/detetektorów
-emiters_angles = 30  #Kąt rozposzenia emiterów
-
-angles = np.arange(0, 180, angle_step)
+angle_step = 4
+n = 360 #Liczba emiterów/detetektorów
+emiters_angles = 180  #Kąt rozposzenia emiterów
+angles = np.arange(0, 360, angle_step)
 sinogram = np.zeros((len(angles), n))
 
 r = w//2
 max_value = 0
+#Radom
 for a, angle in enumerate(angles):
     detectors_angles = np.linspace(angle-emiters_angles//2, angle+emiters_angles//2, n)
     for i, emiter_angle in enumerate(detectors_angles):
         emiter_angle_rad = np.deg2rad(emiter_angle)
         detector_angle_rad = np.deg2rad(detectors_angles[n-1-i])
-        x_e = min(r-int(r * np.sin(emiter_angle_rad)), w-1)
-        x_d = min(r-int(r * np.sin(np.pi+detector_angle_rad)), w-1)
-        y_e = min(r-int(r * np.cos(emiter_angle_rad)), h-1)
-        y_d = min(r-int(r * np.cos(np.pi+detector_angle_rad)), h-1)
+        x_e = min(r-int(r * np.cos(emiter_angle_rad)), w-1)
+        x_d = min(r-int(r * np.cos(np.pi+detector_angle_rad)), w-1)
+        y_e = min(r-int(r * np.sin(emiter_angle_rad)), h-1)
+        y_d = min(r-int(r * np.sin(np.pi+detector_angle_rad)), h-1)
         #img[y_e][x_e] = 255
         #img[y_d][x_d] = 255
 
-        for x,y in bresenham_line(x_e, y_e, x_d, y_d):
+        points = bresenham_line(x_e, y_e, x_d, y_d)
+        for x,y in points:
             sinogram[a][i]+=img[y][x]
             #img[y][x] = 100
-        if sinogram[a][i]>max_value:
-            max_value = sinogram[a][i]
-sinogram/=max_value
+sinogram /= sinogram.max()
 sinogram*=255
+
 #print(sinogram[0][90], max_value)
 
 cv2.imshow("sinogram", sinogram)
 
-cv2.imshow("tomograf", img)
+#Odwrotny Radom
+tomograf = np.zeros(img.shape) #Rozmiar na suwaki
+for a, angle in enumerate(angles):
+    detectors_angles = np.linspace(angle-emiters_angles//2, angle+emiters_angles//2, n)
+    for i, emiter_angle in enumerate(detectors_angles):
+        emiter_angle_rad = np.deg2rad(emiter_angle)
+        detector_angle_rad = np.deg2rad(detectors_angles[n-1-i])
+        x_e = min(r-int(r * np.cos(emiter_angle_rad)), w-1)
+        x_d = min(r-int(r * np.cos(np.pi+detector_angle_rad)), w-1)
+        y_e = min(r-int(r * np.sin(emiter_angle_rad)), h-1)
+        y_d = min(r-int(r * np.sin(np.pi+detector_angle_rad)), h-1)
+        #img[y_e][x_e] = 255
+        #img[y_d][x_d] = 255
+
+        points = bresenham_line(x_e, y_e, x_d, y_d)
+        for x,y in points:
+            tomograf[y][x] += sinogram[a][i]
+tomograf /= tomograf.max()
+tomograf **= 10
+tomograf *= 255
+
+print(tomograf.max())
+#tomograf -=tomograf.max()/4
+
+cv2.imshow("tomograf", tomograf)
 cv2.waitKey()
