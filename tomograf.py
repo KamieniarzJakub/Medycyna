@@ -1,5 +1,6 @@
 import cv2
 import numpy as np
+import pydicom
 
 
 def bresenham_line(x0, y0, x1, y1):
@@ -25,7 +26,32 @@ def bresenham_line(x0, y0, x1, y1):
     return points
 
 
-img = cv2.imread("img/Kropka.jpg", cv2.IMREAD_GRAYSCALE)
+dcm_data = pydicom.dcmread('img-dicom/Kropka.dcm')
+print(dcm_data)
+print("PatientName" in dcm_data.dir())
+dcm_data.PatientBirthDate = "13023"
+print(dcm_data.PatientBirthDate)
+
+img = dcm_data.pixel_array
+print(img)
+dcm_data.PatientName = "Marek Marek"
+pydicom.dcmwrite("output/test.dicom", dcm_data)
+
+# DICOM
+# a) Podstawowe informacje o pacjencie
+# ID pacjenta -> PatientID
+# imie i nazwisko -> PatientName
+# wiek -> PatientAge
+# płeć -> PatientSex
+# data urodzenia -> PatientBirthDate
+
+# b) Data badania -> StudyDate
+
+# c) Komentarzy -> StudyComments lub ImageComments
+
+# obraz -> pixel_array 
+
+#img = cv2.imread("img/Kropka.jpg", cv2.IMREAD_GRAYSCALE)
 h, w = img.shape
 img = cv2.copyMakeBorder(
     img,
