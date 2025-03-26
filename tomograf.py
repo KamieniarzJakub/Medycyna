@@ -32,9 +32,11 @@ print("PatientName" in dcm_data.dir())
 dcm_data.PatientBirthDate = "13023"
 print(dcm_data.PatientBirthDate)
 
+
+dcm_data.PatientName = "Marek Marek"
+
 img = dcm_data.pixel_array
 print(img)
-dcm_data.PatientName = "Marek Marek"
 pydicom.dcmwrite("output/test.dicom", dcm_data)
 
 # DICOM
@@ -120,3 +122,6 @@ tomograf = radon(sinogram, inverse=True, size=img.shape)
 
 cv2.imshow("tomograf", tomograf)
 cv2.waitKey()
+
+dcm_data.pixel_array = tomograf
+pydicom.dcmwrite("output/tomograf.dicom", dcm_data)
