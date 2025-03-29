@@ -64,33 +64,33 @@ def save_as_dicom(file_name, img, patient_data={"PatientName":"", "PatientID":""
 
     ds.save_as(file_name, write_like_original=False)
 
-def read_dicom_file(file_name):
+def read_dicom_file(file_name, tab):
     dcm_data = pydicom.dcmread(f"input/{file_name}")
     print(dcm_data)
     #Dane ogóle o pacjencie
     if not "PatientID" in dcm_data.dir():
         dcm_data.PatientID = ""
-    dcm_data.PatientID = st.text_input("PatientID", dcm_data.PatientID)
+    dcm_data.PatientID = tab.text_input("PatientID", dcm_data.PatientID)
     if not "PatientName" in dcm_data.dir():
         dcm_data.PatientName = ""
-    dcm_data.PatientName = st.text_input("PatientName", dcm_data.PatientName)
+    dcm_data.PatientName = tab.text_input("PatientName", dcm_data.PatientName)
     if not "PatientAge" in dcm_data.dir():
         dcm_data.PatientAge = ""
-    dcm_data.PatientAge = st.text_input("PatientAge", dcm_data.PatientAge)
+    dcm_data.PatientAge = tab.text_input("PatientAge", dcm_data.PatientAge)
     if not "PatientSex" in dcm_data.dir():
         dcm_data.PatientSex = ""
-    dcm_data.PatientSex = st.text_input("PatientSex", dcm_data.PatientSex)
+    dcm_data.PatientSex = tab.text_input("PatientSex", dcm_data.PatientSex)
     if not "PatientBirthDate" in dcm_data.dir():
         dcm_data.PatientBirthDate = ""
-    dcm_data.PatientBirthDate = st.text_input("PatientBirthDate", dcm_data.PatientBirthDate)
+    dcm_data.PatientBirthDate = tab.text_input("PatientBirthDate", dcm_data.PatientBirthDate)
     #Data badania
     if not "StudyDate" in dcm_data.dir():
         dcm_data.StudyDate = ""
-    dcm_data.StudyDate = st.text_input("StudyDate", dcm_data.StudyDate)
+    dcm_data.StudyDate = tab.text_input("StudyDate", dcm_data.StudyDate)
     #Komentarze
     if not "ImageComments" in dcm_data.dir():
         dcm_data.ImageComments = ""
-    dcm_data.ImageComments = st.text_input("ImageComments", dcm_data.ImageComments)
+    dcm_data.ImageComments = tab.text_input("ImageComments", dcm_data.ImageComments)
 
     print(dcm_data.PatientName)
 
@@ -114,14 +114,15 @@ def read_dicom_file(file_name):
 
 # obraz -> pixel_array 
 
+
 image = st.file_uploader("Upload an image", type=["jpg", "jpeg", "png", "dcm"])
 if image is not None:
     file_details = {"FileName":image.name, "FileType":image.type}
-    st.write(file_details)
     with open(f"input/{image.name}", "wb") as f:
         f.write(image.getbuffer())
     if not os.path.splitext(f"input/{image.name}")[1]==".dcm":
         save_as_dicom(f"input/{image.name.split('.')[0]}.dcm", cv2.imread(f"input/{image.name}", cv2.IMREAD_GRAYSCALE))
-    read_dicom_file(f"{image.name.split('.')[0]}.dcm")
+    tab1, tab2 = st.tabs(["Tomograf", "DICOM Data"])
+    read_dicom_file(f"{image.name.split('.')[0]}.dcm", tab2)
     print()
 
