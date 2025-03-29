@@ -1,6 +1,8 @@
 import cv2
 import numpy as np
 import pydicom
+from PIL import Image
+import streamlit as st
 
 
 def bresenham_line(x0, y0, x1, y1):
@@ -25,19 +27,39 @@ def bresenham_line(x0, y0, x1, y1):
 
     return points
 
+def read_dicom_file(file_path):
+    dcm_data = pydicom.dcmread(file_path)
+    print(dcm_data)
+    #Dane ogóle o pacjencie
+    if not "PatientID" in dcm_data.dir():
+        dcm_data.PatientID = ""
+    st.text_input("PatientID", dcm_data.PatientID)
+    if not "PatientName" in dcm_data.dir():
+        dcm_data.PatientName = ""
+    st.text_input("PatientName", dcm_data.PatientName)
+    if not "PatientAge" in dcm_data.dir():
+        dcm_data.PatientAge = ""
+    st.text_input("PatientAge", dcm_data.PatientAge)
+    if not "PatientSex" in dcm_data.dir():
+        dcm_data.PatientSex = ""
+    st.text_input("PatientSex", dcm_data.PatientSex)
+    if not "PatientBirthDate" in dcm_data.dir():
+        dcm_data.PatientBirthDate = ""
+    st.text_input("PatientBirthDate", dcm_data.PatientBirthDate)
+    #Data badania
+    if not "PatientBirthDate" in dcm_data.dir():
+        dcm_data.PatientBirthDate = ""
+    st.text_input("PatientBirthDate", dcm_data.PatientBirthDate)
+    #Komentarze
+    if not "ImageComments" in dcm_data.dir():
+        dcm_data.ImageComments = ""
+    st.text_input("ImageComments", dcm_data.ImageComments)
 
-dcm_data = pydicom.dcmread('img-dicom/Kropka.dcm')
-print(dcm_data)
-print("PatientName" in dcm_data.dir())
-dcm_data.PatientBirthDate = "13023"
-print(dcm_data.PatientBirthDate)
+    print(dcm_data.PatientName)
 
-
-dcm_data.PatientName = "Marek Marek"
-
-img = dcm_data.pixel_array
-print(img)
-pydicom.dcmwrite("output/test.dicom", dcm_data)
+    img = dcm_data.pixel_array
+    print(img)
+    pydicom.dcmwrite("output/test.dicom", dcm_data)
 
 # DICOM
 # a) Podstawowe informacje o pacjencie
@@ -53,7 +75,19 @@ pydicom.dcmwrite("output/test.dicom", dcm_data)
 
 # obraz -> pixel_array 
 
+image = st.file_uploader("Upload an image", type=["jpg", "jpeg", "png", "dcm"])
+if image is not None:
+    file_details = {"FileName":image.name, "FileType":image.type}
+    st.write(file_details)
+    with open(image.name, "wb") as f:
+        f.write(image.getbuffer())
+    read_dicom_file(image.name)
+
+
+
 #img = cv2.imread("img/Kropka.jpg", cv2.IMREAD_GRAYSCALE)
+dcm_data = pydicom.dcmread("img-dicom/Kropka.dcm")
+img = dcm_data.pixel_array
 h, w = img.shape
 img = cv2.copyMakeBorder(
     img,
