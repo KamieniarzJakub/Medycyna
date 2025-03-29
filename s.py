@@ -26,7 +26,7 @@ fig, (ax1, ax2, ax3) = plt.subplots(3, 1)
 # pimg = Image.open("img/Kropka.jpg")
 # pimg =
 # image = cv2.cvt(, cv2.IMREAD_GRAYSCALE)
-image = cv2.imread("img/Kropka.jpg", cv2.IMREAD_GRAYSCALE)
+image = cv2.imread("img/CT_ScoutView.jpg", cv2.IMREAD_GRAYSCALE)
 ax1.imshow(image, cmap="gray")
 ax1.axis("off")
 sinogram = tomograf.radon(image)
