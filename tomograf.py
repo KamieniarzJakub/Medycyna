@@ -1,7 +1,9 @@
 import cv2
 import numpy as np
+from numba import jit
 
 
+@jit
 def bresenham_line(x0, y0, x1, y1):
     points = []
     dx = abs(x1 - x0)
@@ -25,6 +27,7 @@ def bresenham_line(x0, y0, x1, y1):
     return points
 
 
+@jit
 def radon(
     img,
     size=None,
