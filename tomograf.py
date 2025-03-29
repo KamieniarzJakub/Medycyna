@@ -25,20 +25,6 @@ def bresenham_line(x0, y0, x1, y1):
     return points
 
 
-img = cv2.imread("img/Kropka.jpg", cv2.IMREAD_GRAYSCALE)
-h, w = img.shape
-img = cv2.copyMakeBorder(
-    img,
-    int(max((w - h) / 2, 0)),
-    int(max((w - h) / 2, 0)),
-    int(max((h - w) / 2, 0)),
-    int(max((h - w) / 2, 0)),
-    cv2.BORDER_CONSTANT,
-    value=[0],
-)
-cv2.imshow("source", img)
-
-
 def radon(
     img,
     size=None,
@@ -85,12 +71,25 @@ def radon(
     return out
 
 
-sinogram = radon(img)
-cv2.imshow("sinogram", sinogram)
+if __name__ == "__main__":
+    img = cv2.imread("img/Kropka.jpg", cv2.IMREAD_GRAYSCALE)
+    h, w = img.shape
+    img = cv2.copyMakeBorder(
+        img,
+        int(max((w - h) / 2, 0)),
+        int(max((w - h) / 2, 0)),
+        int(max((h - w) / 2, 0)),
+        int(max((h - w) / 2, 0)),
+        cv2.BORDER_CONSTANT,
+        value=[0],
+    )
+    cv2.imshow("source", img)
 
-# Odwrotny Radon
-tomograf = radon(sinogram, inverse=True, size=img.shape)
+    sinogram = radon(img)
+    cv2.imshow("sinogram", sinogram)
 
+    # Odwrotny Radon
+    tomograf = radon(sinogram, inverse=True, size=img.shape)
 
-cv2.imshow("tomograf", tomograf)
-cv2.waitKey()
+    cv2.imshow("tomograf", tomograf)
+    cv2.waitKey()

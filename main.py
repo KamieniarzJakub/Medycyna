@@ -1,6 +1,7 @@
 import os
 import numpy as np
 import cv2
+from PIL import Image
 import dash
 from dash import dcc, html, Output, Input, Dash, State, callback
 import plotly.express as px
@@ -9,10 +10,9 @@ import io
 import matplotlib.pyplot as plt
 from skimage.transform import resize
 import datetime
+import tomograf
 
-app = Dash(
-    __name__, external_stylesheets=["https://codepen.io/chriddyp/pen/bWLwgP.css"]
-)
+app = Dash(__name__)
 
 app.layout = html.Div(
     [
@@ -20,7 +20,7 @@ app.layout = html.Div(
             [
                 html.Div(
                     [
-                        html.Img(id="output-image-upload"),
+                        html.Div(id="output-image-upload"),
                         dcc.Upload(
                             id="upload-image",
                             children=html.Div(
@@ -41,8 +41,8 @@ app.layout = html.Div(
                         ),
                     ]
                 ),
-                html.Img(id="sinogram-display"),
-                html.Img(id="reconstruction-display"),
+                dcc.Graph(id="sinogram-display"),
+                dcc.Graph(id="reconstruction-display"),
             ],
             style={
                 "display": "grid",
@@ -84,65 +84,58 @@ app.layout = html.Div(
 )
 
 
-# def parse_contents(contents, filename, date):
-#     return html.Div(
-#         [
-#             html.H5(filename),
-#             html.H6(datetime.datetime.fromtimestamp(date)),
-#             # HTML images accept base64 encoded strings in the same format
-#             # that is supplied by the upload
-#             html.Img(src=contents),
-#             html.Hr(),
-#             html.Div("Raw Content"),
-#             html.Pre(
-#                 contents[0:200] + "...",
-#                 style={"whiteSpace": "pre-wrap", "wordBreak": "break-all"},
-#             ),
-#         ]
-#     )
+@callback(
+    Output("output-image-upload", "children"),
+    Input("upload-image", "contents"),
+    State("upload-image", "filename"),
+)
+def parse_file(contents, filename):
+    if contents is None:
+        return None
+    return html.Div(
+        [
+            html.H5(filename),
+            # HTML images accept base64 encoded strings in the same format
+            # that is supplied by the upload
+            html.Img(src=contents),
+            html.Hr(),
+            html.Div("Raw Content"),
+            html.Pre(
+                contents[0:200] + "...",
+                style={"whiteSpace": "pre-wrap", "wordBreak": "break-all"},
+            ),
+        ]
+    )
 
 
-#
-# @callback(
-#     Output("output-image-upload", "children"),
-#     Input("upload-image", "contents"),
-#     State("upload-image", "filename"),
-#     State("upload-image", "last_modified"),
-# )
-# def update_output(list_of_contents, list_of_names, list_of_dates):
-#     if list_of_contents is not None:
-#         children = [
-#             parse_contents(c, n, d)
-#             for c, n, d in zip(list_of_contents, list_of_names, list_of_dates)
-#         ]
-#         return children
+@app.callback(
+    [
+        Output("sinogram-display", "figure"),
+        Output("reconstruction-display", "figure"),
+    ],
+    Input("upload-image", "contents"),
+    # [
+    #     Input("angle-step", "value"),
+    #     Input("num-detectors", "value"),
+    #     Input("span", "value"),
+    # ],
+)
+def update_images(contents):
+    if contents is not None:
+        pimg = Image.open(contents)
+        image = cv2.cvtColor(np.array(pimg), cv2.IMREAD_GRAYSCALE)
+        h, w = image.shape
 
+        sinogram = tomograf.radon(image)
+        reconstructed = tomograf.radon(sinogram, (h, w), inverse=True)
 
-# @app.callback(
-#     [Output("sinogram-display", "src"), Output("reconstruction-display", "src")],
-#     Input("upload-image", "contents"),
-#     State("upload-image", "filename"),
-#     State("upload-image", "last_modified"),
-#     # [
-#     #     Input("angle-step", "value"),
-#     #     Input("num-detectors", "value"),
-#     #     Input("span", "value"),
-#     # ],
-# )
-# def update_images(contents, filename, last_modified):
-#     if contents is not None:
-#         # image_path = os.path.join(IMAGE_DIR, image_name)
-#         image = cv2.imread(filename[0], cv2.IMREAD_GRAYSCALE)
-#         # h, w = image.shape
-#
-#         # sinogram = radon_transform(image, angles, num_detectors, span)
-#         # reconstructed = inverse_radon_transform(sinogram, angles, (h, w))
-#
-#         sinogram_fig = px.imshow(image, aspect="auto", color_continuous_scale="gray")
-#         reconstruction_fig = px.imshow(image, color_continuous_scale="gray")
-#
-#         return sinogram_fig, reconstruction_fig
-#
+        sinogram_fig = px.imshow(sinogram, aspect="auto", color_continuous_scale="gray")
+        reconstruction_fig = px.imshow(reconstructed, color_continuous_scale="gray")
+
+        return sinogram_fig, reconstruction_fig
+    else:
+        return (None, None)
+
 
 if __name__ == "__main__":
     app.run(debug=True)
