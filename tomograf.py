@@ -43,51 +43,33 @@ def integer_bresenham(x1, y1, x2, y2):
 
 
 @jit
-def radon(
-    img,
-    size=None,
-    angle_step=2,
-    n=180,
-    emiters_angles=180,
-    inverse=False,
-):
-    # n - Liczba emiterów/detetektorów
-    # emiters_angles = 180  # Kąt rozposzenia emiterów
-    if size is None:
-        size = img.shape
-    h, w = size
-    r = w // 2
+def radon(img, angle_step, num_emiters):
+    h, w = img.shape
     angles = np.arange(0, 360, angle_step)
-    if inverse:
-        out = np.zeros(size)
-    else:
-        out = np.zeros((len(angles), n))
+    out = np.zeros((len(angles), num_emiters))
 
-    for a, angle in enumerate(angles):
-        detectors_angles = np.linspace(
-            angle - emiters_angles // 2, angle + emiters_angles // 2, n
-        )
-        for i, emiter_angle in enumerate(detectors_angles):
-            emiter_angle_rad = np.deg2rad(emiter_angle)
-            detector_angle_rad = np.deg2rad(detectors_angles[n - 1 - i])
-            x_e = min(r - int(r * np.cos(emiter_angle_rad)), w - 1)
-            x_d = min(r - int(r * np.cos(np.pi + detector_angle_rad)), w - 1)
-            y_e = min(r - int(r * np.sin(emiter_angle_rad)), h - 1)
-            y_d = min(r - int(r * np.sin(np.pi + detector_angle_rad)), h - 1)
+    for a, i, y, x in radon_step(angle_step, num_emiters, w, h):
+        out[a][i] += img[y][x]
 
-            points = bresenham_line(x_e, y_e, x_d, y_d)
-            for x, y in points:
-                if inverse:
-                    out[y][x] += img[a][i]
-                else:
-                    out[a][i] += img[y][x]
+    out /= max(out)
+    return out
+
+
+@jit
+def inverse_radon(sinogram, size, angle_step, num_emiters):
+    h, w = size
+    out = np.zeros(size)
+
+    for a, i, y, x in radon_step(angle_step, num_emiters, w, h):
+        out[y][x] += sinogram[a][i]
+
+    out /= max(out)
+    return out
 
 
 @jit
 def radon_step(angle_step, n, w, h):
     r = w / 2
-    # n - Liczba emiterów/detetektorów
-    # emiters_angles = 180  # Kąt rozposzenia emiterów
     detectors_angle = 90
     for a in range(0, 360, angle_step):
         for i in range(n):
@@ -100,7 +82,7 @@ def radon_step(angle_step, n, w, h):
             y_e = min(int(r * np.sin(emiter_angle_rad)), h - 1)
             y_d = min(int(r * np.sin(detector_angle_rad)), h - 1)
 
-            for x, y in bresenham_line(x_e, y_e, x_d, y_d):
+            for x, y in integer_bresenham(x_e, y_e, x_d, y_d):
                 yield (a, i, y, x)
 
 
