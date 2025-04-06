@@ -38,11 +38,13 @@ display_img(image)
 
 if wyswietl_etapy_posrednie:
     sinogram = tomograf.radon(
-        image, krok_ukladu, liczba_detektorów, rozwartosc, krok_skanowania
+        image, krok_ukladu, liczba_detektorów, rozwartosc, krok_skanowania, filtrowanie
     )
     display_img(sinogram)
 else:
-    sinogram = tomograf.radon(image, krok_ukladu, liczba_detektorów, rozwartosc)
+    sinogram = tomograf.radon(
+        image, krok_ukladu, liczba_detektorów, rozwartosc, run_convolve=filtrowanie
+    )
     display_img(sinogram)
 
 
@@ -55,6 +57,7 @@ if wyswietl_etapy_posrednie:
         rozwartosc,
         krok_odtwarzania,
     )
+    reconstructed[reconstructed < 0] = 0
     display_img(reconstructed)
 else:
     reconstructed = tomograf.inverse_radon(
@@ -64,4 +67,5 @@ else:
         liczba_detektorów,
         rozwartosc,
     )
+    reconstructed[reconstructed < 0] = 0
     display_img(reconstructed)

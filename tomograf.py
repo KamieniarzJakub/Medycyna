@@ -24,22 +24,28 @@ def bresenham_line(x0, y0, x1, y1):
 
 
 @jit
-def radon_clean(out):
-    kernel = convolve_kernel(n=21)
-    for a in out:
-        out[a] = np.convolve(out[a, :], kernel, mode="same")
-
-
-@jit
-def radon(img, angle_step, num_emiters, detectors_angle=90, full_scan_range=360):
+def radon(
+    img,
+    angle_step,
+    num_emiters,
+    detectors_angle=90,
+    full_scan_range=360,
+    run_convolve=False,
+):
     w, h = img.shape
     out = np.zeros((full_scan_range // angle_step, num_emiters))
+
     for a, i, y, x in radon_step(
         angle_step, num_emiters, w, h, detectors_angle, full_scan_range
     ):
         out[a][i] += img[y][x]
 
     out /= out.max()
+    if run_convolve:
+        kernel = convolve_kernel(n=21)
+        for a in range(0, full_scan_range // angle_step):
+            out[a] = np.convolve(out[a, :], kernel, mode="same")
+
     return out
 
 
