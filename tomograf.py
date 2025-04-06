@@ -28,7 +28,7 @@ def radon(img, angle_step, num_emiters):
     h, w = img.shape
     out = np.zeros((360 // angle_step, num_emiters))
 
-    for a, i, y, x in radon_step(angle_step, num_emiters, w, h, out):
+    for a, i, y, x in radon_step(angle_step, num_emiters, w, h):
         out[a][i] += img[y][x]
 
     out /= out.max()
@@ -40,7 +40,7 @@ def inverse_radon(sinogram, size, angle_step, num_emiters):
     h, w = size
     out = np.zeros(size)
 
-    for a, i, y, x in radon_step(angle_step, num_emiters, w, h, None):
+    for a, i, y, x in radon_step(angle_step, num_emiters, w, h):
         out[y][x] += sinogram[a][i]
 
     out /= out.max()
@@ -48,8 +48,7 @@ def inverse_radon(sinogram, size, angle_step, num_emiters):
 
 
 @jit
-def radon_step(angle_step, n, w, h, out):
-    kernel = convolve_kernel()
+def radon_step(angle_step, n, w, h):
     r = w / 2
     detectors_angle = 90
     for a, angle in enumerate(range(0, 360, angle_step)):
@@ -66,9 +65,6 @@ def radon_step(angle_step, n, w, h, out):
 
             for x, y in bresenham_line(x_e, y_e, x_d, y_d):
                 yield (a, i, y, x)
-
-            if out is not None:
-                out[a] = np.convolve(out[a, :], kernel, mode="same")
 
 
 @jit
