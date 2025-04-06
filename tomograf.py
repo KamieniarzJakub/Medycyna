@@ -1,5 +1,6 @@
 import numpy as np
 from numba import jit
+import pydicom
 
 
 @jit
@@ -23,7 +24,6 @@ def bresenham_line(x0, y0, x1, y1):
             y0 += sy
 
 
-@jit
 def radon(
     img,
     angle_step,
