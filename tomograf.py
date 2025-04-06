@@ -41,22 +41,22 @@ def radon_clean(out):
 
 
 @jit
-def radon(img, angle_step, num_emiters, full_scan_range=360):
+def radon(img, angle_step, num_emiters, detectors_angle=90, full_scan_range=360):
     w, h = img.shape
     # scans_angle_labels, out = radon_init(angle_step, num_emiters, full_scan_range)
     out = np.zeros((full_scan_range // angle_step, num_emiters))
-    for a, i, y, x in radon_step(angle_step, num_emiters, w, h, 90, out):
+    for a, i, y, x in radon_step(angle_step, num_emiters, w, h, detectors_angle):
         out[a][i] += img[y][x]
 
     return out
 
 
 @jit
-def inverse_radon(sinogram, size, angle_step, num_emiters):
+def inverse_radon(sinogram, size, angle_step, num_emiters, detectors_angle=90):
     h, w = size
     out = np.zeros(size)
 
-    for a, i, y, x in radon_step(angle_step, num_emiters, w, h, 90, out):
+    for a, i, y, x in radon_step(angle_step, num_emiters, w, h, detectors_angle):
         out[y][x] += sinogram[a][i]
 
     out /= out.max()
@@ -96,7 +96,7 @@ def radon_emiter_detector(angle, detectors_angle, shift, i, w, h):
 
 
 @jit
-def radon_step(angle_step, n, w, h, detectors_angle, out):
+def radon_step(angle_step, n, w, h, detectors_angle):
     shift = detectors_angle / (n - 1)
     for a, angle in enumerate(range(0, 360, angle_step)):
         for i in range(n):
