@@ -24,39 +24,35 @@ def bresenham_line(x0, y0, x1, y1):
 
 
 @jit
-def radon_init(angle_step, num_emiters, full_scan_range=360):
-    scans_angle_labels = np.linspace(
-        0, full_scan_range, np.ceil(full_scan_range / angle_step)
-    )
-    out = np.zeros((len(scans_angle_labels), num_emiters))
-    return scans_angle_labels, out
-
-
-@jit
 def radon_clean(out):
     kernel = convolve_kernel(n=21)
     for a in out:
         out[a] = np.convolve(out[a, :], kernel, mode="same")
-    out /= out.max()
 
 
 @jit
 def radon(img, angle_step, num_emiters, detectors_angle=90, full_scan_range=360):
     w, h = img.shape
-    # scans_angle_labels, out = radon_init(angle_step, num_emiters, full_scan_range)
     out = np.zeros((full_scan_range // angle_step, num_emiters))
-    for a, i, y, x in radon_step(angle_step, num_emiters, w, h, detectors_angle):
+    for a, i, y, x in radon_step(
+        angle_step, num_emiters, w, h, detectors_angle, full_scan_range
+    ):
         out[a][i] += img[y][x]
 
+    out /= out.max()
     return out
 
 
 @jit
-def inverse_radon(sinogram, size, angle_step, num_emiters, detectors_angle=90):
+def inverse_radon(
+    sinogram, size, angle_step, num_emiters, detectors_angle=90, full_scan_range=360
+):
     h, w = size
     out = np.zeros(size)
 
-    for a, i, y, x in radon_step(angle_step, num_emiters, w, h, detectors_angle):
+    for a, i, y, x in radon_step(
+        angle_step, num_emiters, w, h, detectors_angle, full_scan_range
+    ):
         out[y][x] += sinogram[a][i]
 
     out /= out.max()
@@ -65,22 +61,13 @@ def inverse_radon(sinogram, size, angle_step, num_emiters, detectors_angle=90):
 
 @jit
 def radon_single_beam(angle, detectors_angle, shift, i, w, h):
-    r = w / 2
-    emiter = angle - detectors_angle / 2 + i * shift
-    emiter_angle_rad = np.deg2rad(emiter)
-    x_e = min(int(r - r * np.cos(emiter_angle_rad)), w - 1)
-    y_e = min(int(r - r * np.sin(emiter_angle_rad)), h - 1)
-    detector = angle + detectors_angle / 2 + 180 - i * shift
-    detector_angle_rad = np.deg2rad(detector)
-    x_d = min(int(r - r * np.cos(detector_angle_rad)), w - 1)
-    y_d = min(int(r - r * np.sin(detector_angle_rad)), h - 1)
-
-    line = []
-    for x, y in bresenham_line(x_e, y_e, x_d, y_d):
-        line.append((i, y, x))
-    return line
+    for x, y in bresenham_line(
+        *radon_emiter_detector(angle, detectors_angle, shift, i, w, h)
+    ):
+        yield (i, y, x)
 
 
+@jit
 def radon_emiter_detector(angle, detectors_angle, shift, i, w, h):
     r = w / 2
     emiter = angle - detectors_angle / 2 + i * shift
@@ -96,9 +83,9 @@ def radon_emiter_detector(angle, detectors_angle, shift, i, w, h):
 
 
 @jit
-def radon_step(angle_step, n, w, h, detectors_angle):
+def radon_step(angle_step, n, w, h, detectors_angle, full_scan_range=360):
     shift = detectors_angle / (n - 1)
-    for a, angle in enumerate(range(0, 360, angle_step)):
+    for a, angle in enumerate(range(0, full_scan_range, angle_step)):
         for i in range(n):
             for b in radon_single_beam(angle, detectors_angle, shift, i, w, h):
                 yield (a, *b)
@@ -115,33 +102,3 @@ def convolve_kernel(n=21):
         kernel[mid - i] = val
     kernel[mid] = 1
     return kernel
-
-
-# if __name__ == "__main__":
-#     import cv2
-#     img = cv2.imread("img/Kropka.jpg", cv2.IMREAD_GRAYSCALE)
-#     h, w = img.shape
-#     img = cv2.copyMakeBorder(
-#         img,
-#         int(max((w - h) / 2, 0)),
-#         int(max((w - h) / 2, 0)),
-#         int(max((h - w) / 2, 0)),
-#         int(max((h - w) / 2, 0)),
-#         cv2.BORDER_CONSTANT,
-#         value=[0],
-#     )
-#     cv2.imshow("source", img)
-#     cv2.waitKey(1)
-#
-#     sinogram = radon(img, 4, 180)
-#     # sinogram = radom_full(img, img.shape, 4, 180, 30)
-#     cv2.imshow("sinogram", sinogram)
-#     cv2.waitKey(1)
-#
-#     # Odwrotny Radon
-#     # tomograf = radom_full(sinogram, img.shape, 4, 180, 30, inverse=True)
-#     tomograf = inverse_radon(sinogram, img.shape, 4, 180)
-#
-#     cv2.imshow("tomograf", tomograf)
-#     cv2.waitKey()
-#     cv2.destroyAllWindows()
