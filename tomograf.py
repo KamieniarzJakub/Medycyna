@@ -68,14 +68,15 @@ def radon_step(angle_step, n, w, h):
 
 
 @jit
-def convolve_kernel():
-    n = 22
+def convolve_kernel(n=21):
     kernel = np.zeros((n,))
-    for i in range(1, n, 2):
-        val = -4 / np.pi**2 / i**2
-        kernel[i] = val
-        kernel[-i] = val
-    kernel[0] = 1
+    mid = n // 2
+    c = -4 / np.pi**2
+    for i in range(1, mid, 2):
+        val = c / (i) ** 2
+        kernel[mid + i] = val
+        kernel[mid - i] = val
+    kernel[mid] = 1
     return kernel
 
 
