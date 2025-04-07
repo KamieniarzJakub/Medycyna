@@ -9,7 +9,6 @@ uv venv
 source .venv/bin/activate # Unix
 .venv\bin\activate.bat # Windows
 uv sync
-uv run
 ```
 
 ## Uruchomienie
