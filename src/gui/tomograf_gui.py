@@ -70,8 +70,6 @@ def view_tomograf(
         s2 = np.vectorize(f)(sinogram.copy())
         col2.image(s2, "Sinogram po przemapowaniu wartości (odcienie szarości)")
 
-        print(sinogram.shape)
-
         s3 = np.zeros((sinogram.shape[0], sinogram.shape[1], 3))
         mask = sinogram >= 0
         s3[mask, :] = sinogram[mask, np.newaxis]
@@ -92,3 +90,4 @@ def view_tomograf(
         krok_odtwarzania,
     )
     st.image(reconstructed, "Obraz po odtworzeniu", clamp=True)
+    return reconstructed

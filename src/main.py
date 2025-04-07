@@ -8,6 +8,7 @@ from gui.tomograf_gui import view_sliders, view_tomograf
 from gui.dicom_gui import dicom_file_gui
 import io
 from pydicom.filebase import DicomFileLike
+from lib.mse import calc_mse
 
 DICOM_MIME = "application/dicom"
 
@@ -67,4 +68,7 @@ if file is not None:
     params = view_sliders(tab1)
 
     if len(params) > 0:
-        view_tomograf(st, image, *params)
+        reconstructed = view_tomograf(st, image, *params)
+
+        mse_result = calc_mse(image, reconstructed)
+        st.text("Błąd średniokwadratowy: " + mse_result)
