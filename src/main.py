@@ -3,10 +3,13 @@ import streamlit as st
 from PIL import Image
 import numpy as np
 import math
-import uuid
 from lib.dicomloader import create_DICOM
 from gui.tomograf_gui import view_sliders, view_tomograf
 from gui.dicom_gui import dicom_file_gui
+import io
+from pydicom.filebase import DicomFileLike
+
+DICOM_MIME = "application/dicom"
 
 
 def add_borders_to_rectangle(img):
@@ -33,7 +36,7 @@ if file is not None:
 
     dcm_data: pydicom.Dataset
     image: np.ndarray
-    if file.type == "application/dicom":
+    if file.type == DICOM_MIME:
         dcm_data = pydicom.dcmread(file)
         image = dcm_data.pixel_array
     else:
@@ -46,8 +49,22 @@ if file is not None:
     params = tuple()
     with st.sidebar:
         tab1, tab2 = st.tabs(["Parametry tomografu", "Dane DICOM"])
-        dicom_file_gui(tab2, dcm_data)
-        params = view_sliders(tab1)
+        dfg = dicom_file_gui(tab2, dcm_data)
+
+    with io.BytesIO() as buf:
+        mem_dataset = DicomFileLike(buf)
+        for k, v in dfg.items():
+            dcm_data.__setattr__(k, v)
+        pydicom.dcmwrite(mem_dataset, dcm_data)
+        mem_dataset.seek(0)
+        st.download_button(
+            label="Download DICOM",
+            data=mem_dataset.read(),
+            file_name="result.dcm",
+            mime=DICOM_MIME,
+            icon=":material/download:",
+        )
+    params = view_sliders(tab1)
 
     if len(params) > 0:
         view_tomograf(st, image, *params)
