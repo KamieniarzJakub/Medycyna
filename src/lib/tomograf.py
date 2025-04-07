@@ -3,26 +3,64 @@ from numba import jit
 
 
 @jit
+def plotLineLow(x0, y0, x1, y1):
+    dx = x1 - x0
+    dy = y1 - y0
+    yi = 1
+    if dy < 0:
+        yi = -1
+        dy = -dy
+    D = (2 * dy) - dx
+    y = y0
+
+    for x in range(x0, x1):
+        yield (x, y)
+        if D > 0:
+            y = y + yi
+            D = D + (2 * (dy - dx))
+        else:
+            D = D + 2 * dy
+
+
+@jit
+def plotLineHigh(x0, y0, x1, y1):
+    dx = x1 - x0
+    dy = y1 - y0
+    xi = 1
+    if dx < 0:
+        xi = -1
+        dx = -dx
+    D = (2 * dx) - dy
+    x = x0
+
+    for y in range(y0, y1):
+        yield (x, y)
+        if D > 0:
+            x = x + xi
+            D = D + (2 * (dx - dy))
+        else:
+            D = D + 2 * dx
+
+
+@jit
 def bresenham_line(x0, y0, x1, y1):
-    dx = abs(x1 - x0)
-    dy = abs(y1 - y0)
-    sx = 1 if x0 < x1 else -1
-    sy = 1 if y0 < y1 else -1
-    err = dx - dy
-
-    while True:
-        yield (x0, y0)
-        if x0 == x1 and y0 == y1:
-            break
-        e2 = 2 * err
-        if e2 > -dy:
-            err -= dy
-            x0 += sx
-        if e2 < dx:
-            err += dx
-            y0 += sy
+    if abs(y1 - y0) < abs(x1 - x0):
+        if x0 > x1:
+            for x, y in plotLineLow(x1, y1, x0, y0):
+                yield (x, y)
+        else:
+            for x, y in plotLineLow(x0, y0, x1, y1):
+                yield (x, y)
+    else:
+        if y0 > y1:
+            for x, y in plotLineHigh(x1, y1, x0, y0):
+                yield (x, y)
+        else:
+            for x, y in plotLineHigh(x0, y0, x1, y1):
+                yield (x, y)
 
 
+@jit
 def radon(
     img,
     angle_step,
