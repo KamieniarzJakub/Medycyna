@@ -350,7 +350,6 @@ dependencies = [
     { name = "opencv-python" },
     { name = "pillow" },
     { name = "pydicom" },
-    { name = "pynetdicom" },
     { name = "streamlit" },
 ]
 
@@ -362,7 +361,6 @@ requires-dist = [
     { name = "opencv-python", specifier = ">=4.11.0.86" },
     { name = "pillow", specifier = ">=11.1.0" },
     { name = "pydicom", specifier = ">=3.0.1" },
-    { name = "pynetdicom", specifier = ">=2.0.2" },
     { name = "streamlit", specifier = ">=1.44.1" },
 ]
 
@@ -555,18 +553,6 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/d7/6f/55ea163b344c91df2e03c007bebf94781f0817656e2c037d7c5bf86c3bfc/pydicom-3.0.1.tar.gz", hash = "sha256:7b8be344b5b62493c9452ba6f5a299f78f8a6ab79786c729b0613698209603ec", size = 2884731 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/27/a6/98651e752a49f341aa99aa3f6c8ba361728dfc064242884355419df63669/pydicom-3.0.1-py3-none-any.whl", hash = "sha256:db32f78b2641bd7972096b8289111ddab01fb221610de8d7afa835eb938adb41", size = 2376126 },
-]
-
-[[package]]
-name = "pynetdicom"
-version = "2.0.2"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "pydicom" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/0f/73/4e5b394548e1defde010589f63d30474212b87fb804c989b2e8fbf95ec62/pynetdicom-2.0.2.tar.gz", hash = "sha256:231212e9b9c5e0debf2af4f17d8afa14ecd1b262a11cdb891b2b2b15f7ab5939", size = 1561254 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/f4/01/a309b8fb9c4dd376108ea3cc85b856e61fe8a7d6c68ff9fcbfeb1160d3ad/pynetdicom-2.0.2-py3-none-any.whl", hash = "sha256:6726173d25a51f66f2a4557d816c0f93b3b2a8435ce3d319e6cdd8e48bf657d5", size = 1632689 },
 ]
 
 [[package]]
