@@ -16,14 +16,14 @@ if file is not None:
 
     dcm_data: pydicom.Dataset
     image: np.ndarray
-    if file.type == "dcm":
+    if file.type == "application/dicom":
         dcm_data = pydicom.FileDataset(file, pydicom.Dataset())
         image = dcm_data.get("ImageData")
     else:
-        image = np.asarray(Image.open(file))
+        image = np.asarray(Image.open(file).convert("L"))
         dcm_data = create_DICOM(image)
 
     tab1, tab2 = st.tabs(["Tomograf", "DICOM Data"])
 
-    view_tomograf(tab1, image)
     dicom_file_gui(tab2, dcm_data)
+    view_tomograf(tab1, image)

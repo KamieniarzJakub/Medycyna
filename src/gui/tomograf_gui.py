@@ -1,15 +1,8 @@
-import matplotlib.pyplot as plt
 from lib import tomograf
+import numpy.typing as npt
 
 
 def view_tomograf(st, image):
-    def display_img(img):
-        fig, ax = plt.subplots()
-        ax.imshow(img, cmap="gray")
-        ax.axis("off")
-        fig.subplots_adjust(0, 0, 1, 1)
-        st.pyplot(fig)
-
     krok_ukladu = st.slider("Krok układu emiter/detektor:", 1, 10, 1)
     liczba_detektorów = st.slider(
         "Liczba detektorów dla jednego układu emiter/detektor", 1, 500, 180
@@ -29,8 +22,9 @@ def view_tomograf(st, image):
                 "Krok odtwarzania:", 0, 360, krok_ukladu, krok_ukladu
             )
 
-    display_img(image)
+    st.image(image, "Obraz źródłowy")
 
+    sinogram: npt.NDArray
     if wyswietl_etapy_posrednie:
         sinogram = tomograf.radon(
             image,
@@ -40,13 +34,13 @@ def view_tomograf(st, image):
             krok_skanowania,
             filtrowanie,
         )
-        display_img(sinogram)
     else:
         sinogram = tomograf.radon(
             image, krok_ukladu, liczba_detektorów, rozwartosc, run_convolve=filtrowanie
         )
-        display_img(sinogram)
+    st.image(sinogram, "Sinogram")
 
+    reconstructed: npt.NDArray
     if wyswietl_etapy_posrednie:
         reconstructed = tomograf.inverse_radon(
             sinogram,
@@ -57,7 +51,6 @@ def view_tomograf(st, image):
             krok_odtwarzania,
         )
         reconstructed[reconstructed < 0] = 0
-        display_img(reconstructed)
     else:
         reconstructed = tomograf.inverse_radon(
             sinogram,
@@ -67,4 +60,5 @@ def view_tomograf(st, image):
             rozwartosc,
         )
         reconstructed[reconstructed < 0] = 0
-        display_img(reconstructed)
+
+    st.image(reconstructed, "Obraz po odtworzeniu")
