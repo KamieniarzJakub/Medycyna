@@ -1,5 +1,5 @@
 import matplotlib.pyplot as plt
-import tomograf
+from lib import tomograf
 
 
 def view_tomograf(st, image):
@@ -9,8 +9,6 @@ def view_tomograf(st, image):
         ax.axis("off")
         fig.subplots_adjust(0, 0, 1, 1)
         st.pyplot(fig)
-
-    st.title("Tomograf")
 
     krok_ukladu = st.slider("Krok układu emiter/detektor:", 1, 10, 1)
     liczba_detektorów = st.slider(
