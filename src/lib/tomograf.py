@@ -39,12 +39,11 @@ def radon(
     ):
         out[a][i] += img[y][x]
 
-    out /= out.max()
     if run_convolve:
         kernel = convolve_kernel(n=21)
         for a in range(0, full_scan_range // angle_step):
             out[a] = np.convolve(out[a, :], kernel, mode="same")
-
+    out /= out.max()
     return out
 
 
