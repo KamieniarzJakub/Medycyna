@@ -34,12 +34,10 @@ if file is not None:
     dcm_data: pydicom.Dataset
     image: np.ndarray
     if file.type == "application/dicom":
-        dcm_data = pydicom.FileDataset(file, pydicom.Dataset())
-        print(type(dcm_data.get("ImageData")))
-        image = dcm_data.get("ImageData")
+        dcm_data = pydicom.dcmread(file)
+        image = dcm_data.pixel_array
     else:
-        image_pil = Image.open(file).convert("L")
-        image = np.asarray(image_pil)
+        image = np.asarray(Image.open(file).convert("L"))
         dcm_data = create_DICOM(image)
 
     if image.shape[0] != image.shape[1]:
