@@ -13,6 +13,7 @@ from lib.mse import calc_mse
 DICOM_MIME = "application/dicom"
 
 
+
 def add_borders_to_rectangle(img):
     h, w = img.shape
     m = max(w, h)
@@ -37,10 +38,11 @@ if file is not None:
 
     dcm_data: pydicom.Dataset
     image: np.ndarray
-    if file.type == DICOM_MIME:
+    if file.type == DICOM_MIME or file.type=="application/octet-stream": #u mnie jest inny typ pliku - nie wiem dlaczego, nie pytam
         dcm_data = pydicom.dcmread(file)
         image = dcm_data.pixel_array
     else:
+        print(file.type)
         image = np.asarray(Image.open(file).convert("L"))
         dcm_data = create_DICOM(image)
 
@@ -71,4 +73,4 @@ if file is not None:
         reconstructed = view_tomograf(st, image, *params)
 
         mse_result = calc_mse(image, reconstructed)
-        st.text("Błąd średniokwadratowy: " + mse_result)
+        st.text("Błąd średniokwadratowy: " + str(mse_result))
