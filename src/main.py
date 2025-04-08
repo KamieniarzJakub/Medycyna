@@ -58,7 +58,7 @@ if file is not None:
         mem_dataset = DicomFileLike(buf)
         for k, v in dfg.items():
             dcm_data.__setattr__(k, v)
-        pydicom.dcmwrite(mem_dataset, dcm_data)
+        pydicom.dcmwrite(mem_dataset, dcm_data, write_like_original=False)
         mem_dataset.seek(0)
         st.download_button(
             label="Download DICOM",
