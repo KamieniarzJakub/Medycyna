@@ -61,42 +61,50 @@ def bresenham_line(x0, y0, x1, y1):
 
 
 @jit
-def radon(
-    img,
-    angle_step,
-    num_emiters,
-    detectors_angle=90,
-    full_scan_range=360,
-    run_convolve=False,
-):
+def radon(img, angle_step, num_emiters, detectors_angle=90, full_scan_range=360, run_convolve=False):
     w, h = img.shape
-    out = np.zeros((full_scan_range // angle_step, num_emiters))
+    angles = full_scan_range // angle_step
+    out = np.zeros((angles, num_emiters))
+    counts = np.zeros_like(out)
 
-    for a, i, y, x in radon_step(
-        angle_step, num_emiters, w, h, detectors_angle, full_scan_range
-    ):
-        out[a][i] += img[y][x]
+    for a, i, y, x in radon_step(angle_step, num_emiters, w, h, detectors_angle, full_scan_range):
+        out[a, i] += img[y, x]
+        counts[a, i] += 1
+
+    for a in range(out.shape[0]):
+        for i in range(out.shape[1]):
+            if counts[a, i] != 0:
+                out[a, i] /= counts[a, i]
+            else:
+                out[a, i] = 0
+
 
     if run_convolve:
         kernel = convolve_kernel(n=21)
-        for a in range(0, full_scan_range // angle_step):
-            out[a] = np.convolve(out[a, :], kernel, mode="same")
+        for a in range(angles):
+            out[a] = np.convolve(out[a], kernel, mode="same")
+
     out /= out.max()
     return out
 
 
+
 @jit
-def inverse_radon(
-    sinogram, size, angle_step, num_emiters, detectors_angle=90, full_scan_range=360
-):
+def inverse_radon(sinogram, size, angle_step, num_emiters, detectors_angle=90, full_scan_range=360):
     h, w = size
     out = np.zeros(size)
+    counts = np.zeros(size)
 
-    for a, i, y, x in radon_step(
-        angle_step, num_emiters, w, h, detectors_angle, full_scan_range
-    ):
-        out[y][x] += sinogram[a][i]
+    for a, i, y, x in radon_step(angle_step, num_emiters, w, h, detectors_angle, full_scan_range):
+        out[y, x] += sinogram[a, i]
+        counts[y, x] += 1
 
+    for y in range(out.shape[0]):
+        for x in range(out.shape[1]):
+            if counts[y, x] != 0:
+                out[y, x] /= counts[y, x]
+            else:
+                out[y, x] = 0
     out /= out.max()
     return out
 
