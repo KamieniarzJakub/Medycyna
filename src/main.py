@@ -53,24 +53,34 @@ if file is not None:
     with st.sidebar:
         tab1, tab2 = st.tabs(["Parametry tomografu", "Dane DICOM"])
         dfg = dicom_file_gui(tab2, dcm_data)
-
-    with io.BytesIO() as buf:
-        mem_dataset = DicomFileLike(buf)
-        for k, v in dfg.items():
-            dcm_data.__setattr__(k, v)
-        pydicom.dcmwrite(mem_dataset, dcm_data, write_like_original=False)
-        mem_dataset.seek(0)
-        st.download_button(
-            label="Download DICOM",
-            data=mem_dataset.read(),
-            file_name="result.dcm",
-            mime=DICOM_MIME,
-            icon=":material/download:",
-        )
     params = view_sliders(tab1)
 
     if len(params) > 0:
         reconstructed = view_tomograf(st, image, *params)
+
+        reconstructed_scaled = np.clip(reconstructed * 255, 0, 255).astype(np.uint8)
+
+        dcm_data.Rows, dcm_data.Columns = reconstructed_scaled.shape
+        dcm_data.PixelData = reconstructed_scaled.tobytes()
+        dcm_data.BitsAllocated = 8
+        dcm_data.BitsStored = 8
+        dcm_data.HighBit = 7
+        dcm_data.SamplesPerPixel = 1
+        dcm_data.PhotometricInterpretation = "MONOCHROME2"
+
+        with io.BytesIO() as buf:
+            mem_dataset = DicomFileLike(buf)
+            for k, v in dfg.items():
+                setattr(dcm_data, k, v)
+            pydicom.dcmwrite(mem_dataset, dcm_data, write_like_original=False)
+            mem_dataset.seek(0)
+            st.download_button(
+                label="Download DICOM",
+                data=mem_dataset.read(),
+                file_name="result.dcm",
+                mime=DICOM_MIME,
+                icon=":material/download:",
+            )
 
         mse_result = calc_mse(image, reconstructed)
         st.text("Błąd średniokwadratowy: " + str(mse_result))
