@@ -4,6 +4,7 @@ from numba import jit
 
 @jit
 def plotLineLow(x0, y0, x1, y1):
+    points = []
     dx = x1 - x0
     dy = y1 - y0
     yi = 1
@@ -13,17 +14,18 @@ def plotLineLow(x0, y0, x1, y1):
     D = (2 * dy) - dx
     y = y0
 
-    for x in range(x0, x1):
-        yield (x, y)
+    for x in range(x0, x1 + 1):
+        points.append((x, y))
         if D > 0:
             y = y + yi
             D = D + (2 * (dy - dx))
         else:
             D = D + 2 * dy
-
+    return points
 
 @jit
 def plotLineHigh(x0, y0, x1, y1):
+    points = []
     dx = x1 - x0
     dy = y1 - y0
     xi = 1
@@ -33,31 +35,28 @@ def plotLineHigh(x0, y0, x1, y1):
     D = (2 * dx) - dy
     x = x0
 
-    for y in range(y0, y1):
-        yield (x, y)
+    for y in range(y0, y1 + 1):
+        points.append((x, y))
         if D > 0:
             x = x + xi
             D = D + (2 * (dx - dy))
         else:
             D = D + 2 * dx
-
+    return points
 
 @jit
 def bresenham_line(x0, y0, x1, y1):
     if abs(y1 - y0) < abs(x1 - x0):
         if x0 > x1:
-            for x, y in plotLineLow(x1, y1, x0, y0):
-                yield (x, y)
+            return plotLineLow(x1, y1, x0, y0)[::-1]
         else:
-            for x, y in plotLineLow(x0, y0, x1, y1):
-                yield (x, y)
+            return plotLineLow(x0, y0, x1, y1)
     else:
         if y0 > y1:
-            for x, y in plotLineHigh(x1, y1, x0, y0):
-                yield (x, y)
+            return plotLineHigh(x1, y1, x0, y0)[::-1]
         else:
-            for x, y in plotLineHigh(x0, y0, x1, y1):
-                yield (x, y)
+            return plotLineHigh(x0, y0, x1, y1)
+
 
 
 @jit
@@ -65,19 +64,14 @@ def radon(img, angle_step, num_emiters, detectors_angle=90, full_scan_range=360,
     w, h = img.shape
     angles = full_scan_range // angle_step
     out = np.zeros((angles, num_emiters))
-    counts = np.zeros_like(out)
 
-    for a, i, y, x in radon_step(angle_step, num_emiters, w, h, detectors_angle, full_scan_range):
-        out[a, i] += img[y, x]
-        counts[a, i] += 1
-
-    for a in range(out.shape[0]):
-        for i in range(out.shape[1]):
-            if counts[a, i] != 0:
-                out[a, i] /= counts[a, i]
-            else:
-                out[a, i] = 0
-
+    for a in range(angles):
+        angle = a * angle_step
+        shift = detectors_angle / (num_emiters - 1)
+        for i in range(num_emiters):
+            beam = radon_single_beam(angle, detectors_angle, shift, i, w, h)
+            for _, y, x in beam:
+                out[a, i] += img[y, x]/len(beam)
 
     if run_convolve:
         kernel = convolve_kernel(n=21)
@@ -89,33 +83,30 @@ def radon(img, angle_step, num_emiters, detectors_angle=90, full_scan_range=360,
 
 
 
+
 @jit
 def inverse_radon(sinogram, size, angle_step, num_emiters, detectors_angle=90, full_scan_range=360):
     h, w = size
     out = np.zeros(size)
     counts = np.zeros(size)
 
-    for a, i, y, x in radon_step(angle_step, num_emiters, w, h, detectors_angle, full_scan_range):
-        out[y, x] += sinogram[a, i]
-        counts[y, x] += 1
-
-    for y in range(out.shape[0]):
-        for x in range(out.shape[1]):
-            if counts[y, x] != 0:
-                out[y, x] /= counts[y, x]
-            else:
-                out[y, x] = 0
+    shift = detectors_angle / (num_emiters - 1)
+    for a, angle in enumerate(range(0, full_scan_range, angle_step)):
+        for i in range(num_emiters):
+            beam = radon_single_beam(angle, detectors_angle, shift, i, w, h)
+            for _, y, x in beam:
+                out[y, x] += sinogram[a, i]/len(beam)
     out /= out.max()
     return out
 
 
 @jit
 def radon_single_beam(angle, detectors_angle, shift, i, w, h):
-    for x, y in bresenham_line(
-        *radon_emiter_detector(angle, detectors_angle, shift, i, w, h)
-    ):
-        yield (i, y, x)
-
+    points = []
+    for x, y in bresenham_line(*radon_emiter_detector(angle, detectors_angle, shift, i, w, h)):
+        if 0 <= x < w and 0 <= y < h:
+            points.append((i, y, x))
+    return points
 
 @jit
 def radon_emiter_detector(angle, detectors_angle, shift, i, w, h):
