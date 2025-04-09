@@ -104,7 +104,7 @@ def view_tomograf(
                 reconstructed_conv,
                 mode="L",
             ),
-            reconstructed_conv.mean(),
+            0.1,
         )
         reconstructed = np.asarray(reconstructed_adj) / 255
 
