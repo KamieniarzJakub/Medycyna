@@ -1,8 +1,6 @@
 import numpy as np
 from numba import jit
 
-
-# Całkowitoliczbowy algorytm Bresenhama dla punktów o malejących współrzędnych
 @jit(cache=True)
 def plotLineLow(x0, y0, x1, y1):
     points = []
@@ -24,8 +22,6 @@ def plotLineLow(x0, y0, x1, y1):
             D = D + 2 * dy
     return points
 
-
-# Całkowitoliczbowy algorytm Bresenhama dla punktów o rosnących współrzędnych
 @jit(cache=True)
 def plotLineHigh(x0, y0, x1, y1):
     points = []
@@ -47,9 +43,6 @@ def plotLineHigh(x0, y0, x1, y1):
             D = D + 2 * dx
     return points
 
-
-# Całkowitoliczbowy algorytm Bresenhama
-# Podział na odcinki w górę i w dół ze względów wydajności
 @jit(cache=True)
 def bresenham_line(x0, y0, x1, y1):
     if abs(y1 - y0) < abs(x1 - x0):
@@ -63,66 +56,43 @@ def bresenham_line(x0, y0, x1, y1):
         else:
             return plotLineHigh(x0, y0, x1, y1)
 
-
-# Transformata Radona
 @jit(cache=True)
-def radon(
-    img,
-    angle_step,
-    num_emiters,
-    detectors_angle=90,
-    full_scan_range=360,
-    run_convolve=False,
-):
+def radon(img, angle_step, num_emiters, detectors_angle=90, full_scan_range=360, run_convolve=False):
     w, h = img.shape
-    angles = full_scan_range // angle_step
-    out = np.zeros((angles, num_emiters))
+    angle_values = np.arange(0, full_scan_range, angle_step)
+    out = np.zeros((len(angle_values), num_emiters))
     shift = detectors_angle / (num_emiters - 1)
 
-    # Dla każdego ustawienia zestawu emiterów i detektorów
-    for a, angle in enumerate(range(0, full_scan_range, angle_step)):
-        # Dla każdej pary emiter-detektor
+    for a, angle in enumerate(angle_values):
         for i in range(num_emiters):
-            # Pojedynczy promień między emiterem a detektorem
             beam = radon_single_beam(angle, detectors_angle, shift, i, w, h)
             for y, x in beam:
                 out[a, i] += img[y, x] / len(beam)
 
-    # Filtrowanie przez splot
     if run_convolve:
         kernel = convolve_kernel(n=21)
-        for a in range(angles):
+        for a in range(len(angle_values)):
             out[a] = np.convolve(out[a], kernel, mode="same")
 
-    # Normalizacja wartości
     out /= out.max()
     return out
 
-
-# Odwrotna transformata Radona
 @jit(cache=True)
-def inverse_radon(
-    sinogram, size, angle_step, num_emiters, detectors_angle=90, full_scan_range=360
-):
+def inverse_radon(sinogram, size, angle_step, num_emiters, detectors_angle=90, full_scan_range=360):
     h, w = size
     out = np.zeros(size)
+    angle_values = np.arange(0, full_scan_range, angle_step)
     shift = detectors_angle / (num_emiters - 1)
 
-    # Dla każdego ustawienia zestawu emiterów i detektorów
-    for a, angle in enumerate(range(0, full_scan_range, angle_step)):
-        # Dla każdej pary emiter-detektor
+    for a, angle in enumerate(angle_values):
         for i in range(num_emiters):
-            # Pojedynczy promień między emiterem a detektorem
             beam = radon_single_beam(angle, detectors_angle, shift, i, w, h)
             for y, x in beam:
                 out[y, x] += sinogram[a, i] / len(beam)
 
-    # Normalizacja wartości
     out /= out.max()
     return out
 
-
-# Wyznaczenie wszystkich punktów odcinka Bresenhama dla danego kąta i numeru porządkowego promienia
 @jit(cache=True)
 def radon_single_beam(angle, detectors_angle, shift, i, w, h):
     points = []
@@ -133,8 +103,6 @@ def radon_single_beam(angle, detectors_angle, shift, i, w, h):
             points.append((y, x))
     return points
 
-
-# Wyznaczenie pozycji emitera i detektora dla danego kąta i numeru porządkowego promienia
 @jit(cache=True)
 def radon_emiter_detector(angle, detectors_angle, shift, i, w, h):
     r = w / 2
@@ -149,8 +117,6 @@ def radon_emiter_detector(angle, detectors_angle, shift, i, w, h):
 
     return (x_e, y_e, x_d, y_d)
 
-
-# Maska splotu
 @jit(cache=True)
 def convolve_kernel(n=21):
     kernel = np.zeros((n,))

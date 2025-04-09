@@ -3,7 +3,7 @@ import numpy as np
 
 
 def view_sliders(st):
-    krok_ukladu = st.slider("Krok układu emiter/detektor:", 1, 10, 1)
+    krok_ukladu = st.slider("Krok układu emiter/detektor:", 0.5, 10, 0.5)
     liczba_detektorów = st.slider(
         "Liczba detektorów dla jednego układu emiter/detektor", 90, 1000, 180, 90
     )
