@@ -65,5 +65,5 @@ if file is not None:
                 icon=":material/download:",
             )
 
-        mse_result = calc_mse(image, reconstructed)
+        mse_result = calc_mse(image / 255, reconstructed)
         st.text("Błąd średniokwadratowy: " + str(mse_result))
