@@ -17,11 +17,11 @@ def view_sliders(st):
     krok_odtwarzania = 0
     if wyswietl_etapy_posrednie:
         krok_skanowania = st.slider(
-            "Krok skanowania:", 0, 360, krok_ukladu, krok_ukladu
+            "Krok skanowania:", 0.0, 360.0, krok_ukladu, krok_ukladu
         )
-        if krok_skanowania == 360:
+        if krok_skanowania == 360.0:
             krok_odtwarzania = st.slider(
-                "Krok odtwarzania:", 0, 360, krok_ukladu, krok_ukladu
+                "Krok odtwarzania:", 0.0, 360.0, krok_ukladu, krok_ukladu
             )
 
     return (
