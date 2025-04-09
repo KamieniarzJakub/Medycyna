@@ -3,7 +3,7 @@ from numba import jit
 
 
 # Całkowitoliczbowy algorytm Bresenhama dla punktów o malejących współrzędnych
-@jit(parallel=True, cache=True)
+@jit(cache=True)
 def plotLineLow(x0, y0, x1, y1):
     points = []
     dx = x1 - x0
@@ -26,7 +26,7 @@ def plotLineLow(x0, y0, x1, y1):
 
 
 # Całkowitoliczbowy algorytm Bresenhama dla punktów o rosnących współrzędnych
-@jit(parallel=True, cache=True)
+@jit(cache=True)
 def plotLineHigh(x0, y0, x1, y1):
     points = []
     dx = x1 - x0
@@ -50,7 +50,7 @@ def plotLineHigh(x0, y0, x1, y1):
 
 # Całkowitoliczbowy algorytm Bresenhama
 # Podział na odcinki w górę i w dół ze względów wydajności
-@jit(parallel=True, cache=True)
+@jit(cache=True)
 def bresenham_line(x0, y0, x1, y1):
     if abs(y1 - y0) < abs(x1 - x0):
         if x0 > x1:
@@ -123,7 +123,7 @@ def inverse_radon(
 
 
 # Wyznaczenie wszystkich punktów odcinka Bresenhama dla danego kąta i numeru porządkowego promienia
-@jit(parallel=True, cache=True)
+@jit(cache=True)
 def radon_single_beam(angle, detectors_angle, shift, i, w, h):
     points = []
     for x, y in bresenham_line(
@@ -135,7 +135,7 @@ def radon_single_beam(angle, detectors_angle, shift, i, w, h):
 
 
 # Wyznaczenie pozycji emitera i detektora dla danego kąta i numeru porządkowego promienia
-@jit(parallel=True, cache=True)
+@jit(cache=True)
 def radon_emiter_detector(angle, detectors_angle, shift, i, w, h):
     r = w / 2
     emiter = angle - detectors_angle / 2 + i * shift
@@ -151,7 +151,7 @@ def radon_emiter_detector(angle, detectors_angle, shift, i, w, h):
 
 
 # Maska splotu
-@jit(parallel=True, cache=True)
+@jit(cache=True)
 def convolve_kernel(n=21):
     kernel = np.zeros((n,))
     mid = n // 2
