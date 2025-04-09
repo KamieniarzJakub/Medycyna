@@ -5,9 +5,9 @@ import numpy as np
 def view_sliders(st):
     krok_ukladu = st.slider("Krok układu emiter/detektor:", 1, 10, 1)
     liczba_detektorów = st.slider(
-        "Liczba detektorów dla jednego układu emiter/detektor", 1, 500, 180
+        "Liczba detektorów dla jednego układu emiter/detektor", 90, 1000, 180, 90
     )
-    rozwartosc = st.slider("Rozwartość/rozpiętość układu emiter/detektor:", 0, 180, 90)
+    rozwartosc = st.slider("Rozwartość/rozpiętość układu emiter/detektor:", 0, 360, 90)
     wyswietl_etapy_posrednie = st.checkbox("Wyświetl etapy pośrednie")
     filtrowanie = st.checkbox("Filtrowanie przez konwolucję")
 
