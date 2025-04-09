@@ -1,5 +1,4 @@
 from lib import tomograf
-import numpy.typing as npt
 import numpy as np
 
 

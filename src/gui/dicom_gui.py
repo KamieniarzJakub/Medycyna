@@ -1,5 +1,4 @@
 from pydicom.dataset import Dataset
-from lib import dicomloader
 
 
 def dicom_file_gui(tab, dcm_data: Dataset):
@@ -32,4 +31,3 @@ def dicom_file_gui(tab, dcm_data: Dataset):
 # c) Komentarzy -> StudyComments lub ImageComments
 
 # obraz -> pixel_array
-#

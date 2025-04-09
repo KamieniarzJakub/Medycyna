@@ -2,7 +2,7 @@ import pydicom
 import streamlit as st
 from PIL import Image
 import numpy as np
-import math
+from lib import img_processing
 from lib.dicomloader import create_DICOM
 from gui.tomograf_gui import view_sliders, view_tomograf
 from gui.dicom_gui import dicom_file_gui
@@ -11,22 +11,6 @@ from pydicom.filebase import DicomFileLike
 from lib.mse import calc_mse
 
 DICOM_MIME = "application/dicom"
-
-
-
-def add_borders_to_rectangle(img):
-    h, w = img.shape
-    m = max(w, h)
-    pw = (
-        (math.floor((m - h) / 2), math.ceil((m - h) / 2)),
-        (math.floor((m - w) / 2), math.ceil((m - w) / 2)),
-    )
-    return np.pad(
-        img,
-        pw,
-        "constant",
-        constant_values=(0),
-    )
 
 
 st.title("Tomograf")
@@ -38,16 +22,15 @@ if file is not None:
 
     dcm_data: pydicom.Dataset
     image: np.ndarray
-    if file.type == DICOM_MIME or file.type=="application/octet-stream": #u mnie jest inny typ pliku - nie wiem dlaczego, nie pytam
+    if file.type == DICOM_MIME or file.type == "application/octet-stream":
         dcm_data = pydicom.dcmread(file)
         image = dcm_data.pixel_array
     else:
-        print(file.type)
         image = np.asarray(Image.open(file).convert("L"))
         dcm_data = create_DICOM(image)
 
     if image.shape[0] != image.shape[1]:
-        image = add_borders_to_rectangle(image)
+        image = img_processing.add_borders_to_rectangle(image)
 
     params = tuple()
     with st.sidebar:
