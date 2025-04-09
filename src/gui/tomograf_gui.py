@@ -1,5 +1,6 @@
 from lib import tomograf
 import numpy as np
+from PIL import Image, ImageOps
 
 
 def view_sliders(st):
@@ -10,6 +11,7 @@ def view_sliders(st):
     rozwartosc = st.slider("Rozwartość/rozpiętość układu emiter/detektor:", 0, 360, 90)
     wyswietl_etapy_posrednie = st.checkbox("Wyświetl etapy pośrednie")
     filtrowanie = st.checkbox("Filtrowanie przez konwolucję")
+    auto_contrast = st.checkbox("Auto kontrast")
 
     krok_skanowania = 0
     krok_odtwarzania = 0
@@ -28,6 +30,7 @@ def view_sliders(st):
         rozwartosc,
         wyswietl_etapy_posrednie,
         filtrowanie,
+        auto_contrast,
         krok_skanowania,
         krok_odtwarzania,
     )
@@ -41,6 +44,7 @@ def view_tomograf(
     rozwartosc,
     wyswietl_etapy_posrednie,
     filtrowanie,
+    auto_contrast,
     krok_skanowania,
     krok_odtwarzania,
 ):
@@ -80,13 +84,30 @@ def view_tomograf(
     if not wyswietl_etapy_posrednie:
         krok_odtwarzania = 360
 
-    reconstructed = tomograf.inverse_radon(
-        sinogram,
-        image.shape,
-        krok_ukladu,
-        liczba_detektorów,
-        rozwartosc,
-        krok_odtwarzania,
+    reconstructed = np.clip(
+        tomograf.inverse_radon(
+            sinogram,
+            image.shape,
+            krok_ukladu,
+            liczba_detektorów,
+            rozwartosc,
+            krok_odtwarzania,
+        ),
+        0,
+        1,
     )
-    st.image(reconstructed, "Obraz po odtworzeniu", clamp=True)
+
+    if auto_contrast:
+        reconstructed_conv = (255 * reconstructed).astype(np.uint8)
+        reconstructed_adj = ImageOps.autocontrast(
+            Image.fromarray(
+                reconstructed_conv,
+                mode="L",
+            ),
+            reconstructed_conv.mean(),
+        )
+        reconstructed = np.asarray(reconstructed_adj) / 255
+
+    st.image(reconstructed, "Obraz po odtworzeniu")
+
     return reconstructed
