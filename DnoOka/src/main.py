@@ -1,6 +1,7 @@
 import pydicom
 import streamlit as st
 from PIL import Image
+import gzip
 import numpy as np
 from lib import img_processing
 from lib.dicomloader import create_DICOM
@@ -13,9 +14,9 @@ from lib.mse import calc_mse
 DICOM_MIME = "application/dicom"
 
 
-st.title("Tomograf")
+st.title("Wykrywanie naczyń dna siatkówki oka")
 file = st.file_uploader(
-    "Upload an image", type=["jpg", "jpeg", "png", "dcm"], accept_multiple_files=False
+    "Upload an image", type=["jpg", "jpeg", "png", "dcm", "ppm", "gz"], accept_multiple_files=False
 )
 if file is not None:
     file_details = {"FileName": file.name, "FileType": file.type}
@@ -25,6 +26,10 @@ if file is not None:
     if file.type == DICOM_MIME or file.type == "application/octet-stream":
         dcm_data = pydicom.dcmread(file)
         image = dcm_data.pixel_array
+    elif file.type == "application/gzip":
+        with gzip.open(file) as f:
+            image = np.asarray(Image.open(f).convert("L"))
+        dcm_data = create_DICOM(image)
     else:
         image = np.asarray(Image.open(file).convert("L"))
         dcm_data = create_DICOM(image)
