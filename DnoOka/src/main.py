@@ -37,29 +37,33 @@ if file is not None:
     image = read_file(file)
     image_arr = np.asarray(image)
 
-    st.image(image, caption="Oryginalny obraz", use_column_width=True, clamp=True)
+    st.image(image, caption="Oryginalny obraz", use_container_width=True, clamp=True)
     tab1, tab2, tab3 = st.tabs(["Wstępne przetwarzanie", "Segmentacja naczyń", "Postprocessing"])
     
     pre = preprocess_image(image_arr / 255.0)
     vessels = segment_vessels(pre)
     final = postprocess_image(vessels)
+    diff: Image.Image | None = None
 
     expected_image: np.ndarray
     if expected_result is not None:
-        expected_image_arr = np.asarray(read_file(expected_result).convert("L"))
+        expected_image_arr =  np.asarray(read_file(expected_result))
+        print(image_arr.shape)
+        print(expected_image_arr.shape)
         diff = visualize_array_difference(image_arr,expected_image_arr)
 
     with tab1:
-        st.image(pre, caption="Po wstępnym przetwarzaniu", use_column_width=True, clamp=True)
+        st.image(pre, caption="Po wstępnym przetwarzaniu", use_container_width=True, clamp=True)
 
     with tab2:
-
-        st.image(vessels, caption="Segmentacja naczyń (Frangi)", use_column_width=True, clamp=True)
+        st.image(vessels, caption="Segmentacja naczyń (Frangi)", use_container_width=True, clamp=True)
 
     with tab3:
-        st.image(final, caption="Po końcowym przetwarzaniu", use_column_width=True, clamp=True)
+        st.image(final, caption="Po końcowym przetwarzaniu", use_container_width=True, clamp=True)
 
-        if expected_result is not None:
+        if diff is not None:
+            st.image(expected_image, "Obraz docelowy", clamp=True)
+
             st.image(diff, "Różnica względem obrazu docelowego", clamp=True)
 
             mse_result = (np.asarray(diff)**2).mean()
