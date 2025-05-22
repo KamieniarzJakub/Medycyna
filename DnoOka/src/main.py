@@ -11,6 +11,7 @@ import io
 from pydicom.filebase import DicomFileLike
 from lib.mse import calc_mse
 import os
+from lib.przetwarzanie import preprocess_image, segment_vessels, postprocess_image
 
 DICOM_MIME = "application/dicom"
 
@@ -22,66 +23,29 @@ file = st.file_uploader(
 if file is not None:
     file_details = {"FileName": file.name, "FileType": file.type}
 
-    dcm_data: pydicom.Dataset
     image: np.ndarray
-    if file.type == DICOM_MIME:
-        dcm_data = pydicom.dcmread(file)
-        image = dcm_data.pixel_array
-    elif file.type == "application/gzip" or file.type == "application/x-gzip":
+    if file.type == "application/gzip" or file.type == "application/x-gzip":
         with gzip.open(file) as f:
-            image = np.asarray(Image.open(f).convert("L"))
-        dcm_data = create_DICOM(image)
+            image = np.asarray(Image.open(f))
     elif file.type == "application/ppm":
-        image = np.asarray(Image.open(file).convert("L"))
-        dcm_data = create_DICOM(image)
+        image = np.asarray(Image.open(file))
     elif file.type=="application/octet-stream":
-        filename = file.name.lower()
-        extension = os.path.splitext(filename)[1]
-
-        if extension in [".dcm"]:
-            dcm_data = pydicom.dcmread(file)
-            image = dcm_data.pixel_array
-        else:
-            image = np.asarray(Image.open(file).convert("L"))
-            dcm_data = create_DICOM(image)
+        image = np.asarray(Image.open(file))
     else:
         raise Exception("Błędy typ pliku") 
 
-    if image.shape[0] != image.shape[1]:
-        image = img_processing.add_borders_to_rectangle(image)
+    st.image(image, caption="Oryginalny obraz", use_column_width=True, clamp=True)
+    tab1, tab2, tab3 = st.tabs(["Wstępne przetwarzanie", "Segmentacja naczyń", "Postprocessing"])
+    
+    with tab1:
+        pre = preprocess_image(image / 255.0)
+        st.image(pre, caption="Po wstępnym przetwarzaniu", use_column_width=True, clamp=True)
 
-    params = tuple()
-    with st.sidebar:
-        tab1, tab2 = st.tabs(["Parametry przetwarzania obrazu", "Dane DICOM"])
-        dfg = dicom_file_gui(tab2, dcm_data)
-    params = view_sliders(tab1)
+    with tab2:
+        vessels = segment_vessels(pre)
+        st.image(vessels, caption="Segmentacja naczyń (Frangi)", use_column_width=True, clamp=True)
 
-    if len(params) > 0:
-        reconstructed = view_tomograf(st, image, *params)
-
-        reconstructed_scaled = np.clip(reconstructed * 255, 0, 255).astype(np.uint8)
-
-        dcm_data.Rows, dcm_data.Columns = reconstructed_scaled.shape
-        dcm_data.PixelData = reconstructed_scaled.tobytes()
-        dcm_data.BitsAllocated = 8
-        dcm_data.BitsStored = 8
-        dcm_data.HighBit = 7
-        dcm_data.SamplesPerPixel = 1
-        dcm_data.PhotometricInterpretation = "MONOCHROME2"
-
-        with io.BytesIO() as buf:
-            mem_dataset = DicomFileLike(buf)
-            for k, v in dfg.items():
-                setattr(dcm_data, k, v)
-            pydicom.dcmwrite(mem_dataset, dcm_data, write_like_original=False)
-            mem_dataset.seek(0)
-            st.download_button(
-                label="Download DICOM",
-                data=mem_dataset.read(),
-                file_name="result.dcm",
-                mime=DICOM_MIME,
-                icon=":material/download:",
-            )
-
-        mse_result = calc_mse(image / 255, reconstructed)
-        st.text("Błąd średniokwadratowy: " + str(mse_result))
+    with tab3:
+        final = postprocess_image(vessels)
+        st.image(final, caption="Po końcowym przetwarzaniu", use_column_width=True, clamp=True)
+    
