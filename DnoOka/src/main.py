@@ -45,7 +45,7 @@ if file is not None:
             image = np.asarray(Image.open(file).convert("L"))
             dcm_data = create_DICOM(image)
     else:
-        raise Exception("Błędy typ pliku") 
+        raise Exception("Błędny typ pliku: " + file.type + ", rozszerzenie: " + os.path.splitext(filename)[1:]) 
 
     if image.shape[0] != image.shape[1]:
         image = img_processing.add_borders_to_rectangle(image)
