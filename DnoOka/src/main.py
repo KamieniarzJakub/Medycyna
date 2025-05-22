@@ -10,6 +10,7 @@ from gui.dicom_gui import dicom_file_gui
 import io
 from pydicom.filebase import DicomFileLike
 from lib.mse import calc_mse
+import os
 
 DICOM_MIME = "application/dicom"
 
@@ -23,16 +24,28 @@ if file is not None:
 
     dcm_data: pydicom.Dataset
     image: np.ndarray
-    if file.type == DICOM_MIME or file.type == "application/octet-stream":
+    if file.type == DICOM_MIME:
         dcm_data = pydicom.dcmread(file)
         image = dcm_data.pixel_array
-    elif file.type == "application/gzip":
+    elif file.type == "application/gzip" or file.type == "application/x-gzip":
         with gzip.open(file) as f:
             image = np.asarray(Image.open(f).convert("L"))
         dcm_data = create_DICOM(image)
-    else:
+    elif file.type == "application/ppm":
         image = np.asarray(Image.open(file).convert("L"))
         dcm_data = create_DICOM(image)
+    elif file.type=="application/octet-stream":
+        filename = file.name.lower()
+        extension = os.path.splitext(filename)[1]
+
+        if extension in [".dcm"]:
+            dcm_data = pydicom.dcmread(file)
+            image = dcm_data.pixel_array
+        else:
+            image = np.asarray(Image.open(file).convert("L"))
+            dcm_data = create_DICOM(image)
+    else:
+        raise Exception("Błędy typ pliku") 
 
     if image.shape[0] != image.shape[1]:
         image = img_processing.add_borders_to_rectangle(image)
