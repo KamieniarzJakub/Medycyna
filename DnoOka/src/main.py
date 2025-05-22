@@ -6,14 +6,22 @@ from lib import img_processing
 from gui.tomograf_gui import view_sliders, view_dno_oka
 import io
 from lib.mse import calc_mse
+from lib.calc_diff import visualize_array_difference
 
 supported_file_types = ["jpg", "jpeg", "png", "ppm", "gz", "webp", "avif", "gif"]
 
-def read_img(fil):
+def read_img(fil: io.BytesIO) -> np.ndarray:
     try:
         return np.asarray(Image.open(fil))
     except UnidentifiedImageError:
         raise Exception("Błędny typ pliku: ", fil.type, ", plik: ", fil.name, ", wspierane rozszerzenia: ", supported_file_types) 
+
+def read_file(file):
+    if file.type == "application/gzip" or file.type == "application/x-gzip":
+        with gzip.open(file) as f:
+            return read_img(f)
+    else:
+        return read_img(file)
 
 st.title("Wykrywanie naczyń dna siatkówki oka")
 file = st.file_uploader(
@@ -25,15 +33,11 @@ expected_result = st.file_uploader(
 )
 
 if file is not None:
-    file_details = {"FileName": file.name, "FileType": file.type}
+    image = read_file(file)
 
-
-    image: np.ndarray
-    if file.type == "application/gzip" or file.type == "application/x-gzip":
-        with gzip.open(file) as f:
-            image = read_img(f)
-    else:
-        image = read_img(file)
+    expected_image: np.ndarray
+    if expected_result is not None:
+        expected_image = read_file(expected_result)
 
     params = tuple()
     with st.sidebar:
@@ -42,6 +46,10 @@ if file is not None:
 
     if len(params) > 0:
         reconstructed = view_dno_oka(st, image, *params)
+
+        if expected_result is not None:
+            diff = visualize_array_difference(image,expected_image)
+            st.image(diff, "Różnica względem obrazu docelowego", clamp=True)
 
         mse_result = calc_mse(image / 255, reconstructed)
         st.text("Błąd średniokwadratowy: " + str(mse_result))
