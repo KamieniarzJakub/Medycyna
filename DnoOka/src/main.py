@@ -65,6 +65,12 @@ if file is not None:
 
             img = Image.fromarray(diff, 'RGB')
             st.image(img, "Różnica względem obrazu docelowego", clamp=True)
+            """
+                - Na czerwono nadmiarowe wykrycia
+                - Na czarno brak różnicy, czyli poprawne
+                - Na niebiesko brakujące wykrycia
+            """
+            
 
             mse_result = (diff**2).mean()
             st.text("Błąd średniokwadratowy: " + str(mse_result))

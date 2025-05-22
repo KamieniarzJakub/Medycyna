@@ -15,26 +15,18 @@ def get_color(value,min_diff,max_diff):
 
 def visualize_array_difference(array1: np.ndarray, array2: np.ndarray) -> np.ndarray | None:
     """
-    Visualizes the element-wise difference between two NumPy arrays as an image.
+    Visualizes the element-wise difference between two arrays as an image.
 
     The image uses a color scheme to represent the difference:
-    - Negative values: Shades of red (darker red for larger absolute negative values).
-    - Zero values: Black.
-    - Positive values: Shades of blue (darker blue for larger positive values).
-
-    Args:
-        array1 (numpy.ndarray): The first NumPy array.
-        array2 (numpy.ndarray): The second NumPy array.
-
-    Returns:
-        PIL.Image.Image: A Pillow Image object representing the difference.
-                         Returns None if the input arrays have different shapes.
+    - Negative values: Shades of red (more intense red for smaller negative values, redundant values).
+    - Zero values: Black. (no difference)
+    - Positive values: Shades of blue (more intense blue for larger positive values, missing values).
     """
     if array1.shape != array2.shape:
         print(f"Error: Input arrays must have the same shape. Got {array1.shape} and {array2.shape}")
         return None
 
-    diff_array = array2 - array1
+    diff_array: np.ndarray[np.int16] = (array2.astype(np.int16) - array1.astype(np.int16))
     height, width = diff_array.shape
 
     min_diff = np.min(diff_array)
