@@ -1,5 +1,5 @@
 import streamlit as st
-from PIL import Image
+from PIL import Image, UnidentifiedImageError
 import gzip
 import numpy as np
 from lib import img_processing
@@ -7,28 +7,33 @@ from gui.tomograf_gui import view_sliders, view_dno_oka
 import io
 from lib.mse import calc_mse
 
+supported_file_types = ["jpg", "jpeg", "png", "ppm", "gz", "webp", "avif", "gif"]
+
+def read_img(fil):
+    try:
+        return np.asarray(Image.open(fil))
+    except UnidentifiedImageError:
+        raise Exception("Błędny typ pliku: ", fil.type, ", plik: ", fil.name, ", wspierane rozszerzenia: ", supported_file_types) 
+
 st.title("Wykrywanie naczyń dna siatkówki oka")
 file = st.file_uploader(
-    "Skan siatkówki oka do analizy", type=["jpg", "jpeg", "png", "dcm", "ppm", "gz"], accept_multiple_files=False
+    "Skan siatkówki oka do analizy", type=supported_file_types, accept_multiple_files=False
 )
 
 expected_result = st.file_uploader(
-    "[Opcjonalne] docelowy obraz naczyń", type=["jpg", "jpeg", "png", "dcm", "ppm", "gz"], accept_multiple_files=False
+    "[Opcjonalne] docelowy obraz naczyń", type=supported_file_types, accept_multiple_files=False
 )
 
 if file is not None:
     file_details = {"FileName": file.name, "FileType": file.type}
 
+
     image: np.ndarray
     if file.type == "application/gzip" or file.type == "application/x-gzip":
         with gzip.open(file) as f:
-            image = np.asarray(Image.open(f).convert("L"))
-    elif file.type == "application/ppm":
-        image = np.asarray(Image.open(file).convert("L"))
-    elif file.type=="application/octet-stream":
-        image = np.asarray(Image.open(file).convert("L"))
+            image = read_img(f)
     else:
-        raise Exception("Błędny typ pliku: " + file.type + ", plik: " + file.name) 
+        image = read_img(file)
 
     params = tuple()
     with st.sidebar:
