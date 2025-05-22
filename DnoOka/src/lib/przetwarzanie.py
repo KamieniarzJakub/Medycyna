@@ -1,5 +1,18 @@
 import cv2
 from skimage import exposure, filters, morphology
+from PIL import ImageOps, Image
+import numpy as np
+
+def auto_contrast_bw(img: np.ndarray) -> np.ndarray:
+    img_conv = (255 * img).astype(np.uint8)
+    img_adj = ImageOps.autocontrast(
+        Image.fromarray(
+            img_conv,
+            mode="L",
+        ),
+        0.1,
+    )
+    return np.asarray(img_adj) / 255
 
 def preprocess_image(img):
     # 1. Ekstrakcja zielonego kanału jeśli RGB
@@ -46,4 +59,26 @@ def postprocess_image(vessels):
     binary = vessels > 0.2
     cleaned = morphology.remove_small_objects(binary, min_size=64)
     cleaned = morphology.binary_closing(cleaned, morphology.disk(2))
+    cleaned = auto_contrast_bw(cleaned)
     return cleaned
+
+# Dodawanie czarnej ramki do niekwadratowych zdjęć
+def add_borders_to_rectangle(img):
+    h, w = img.shape
+    m = max(w, h)
+    pw = (
+        (
+            np.floor((m - h) / 2, dtype=int, casting="unsafe"),
+            np.ceil((m - h) / 2, dtype=int, casting="unsafe"),
+        ),
+        (
+            np.floor((m - w) / 2, dtype=int, casting="unsafe"),
+            np.ceil((m - w) / 2, dtype=int, casting="unsafe"),
+        ),
+    )
+    return np.pad(
+        img,
+        pw,
+        "constant",
+        constant_values=(0),
+    )

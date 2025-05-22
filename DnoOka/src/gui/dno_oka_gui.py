@@ -1,5 +1,6 @@
 import numpy as np
 from PIL import Image, ImageOps
+from lib.img_processing import auto_contrast_bw
 
 
 def view_sliders(st):
@@ -17,16 +18,8 @@ def view_dno_oka(
 ):
     st.image(image, "Obraz źródłowy", clamp=True)
 
-    if auto_contrast:
-        reconstructed_conv = (255 * reconstructed).astype(np.uint8)
-        reconstructed_adj = ImageOps.autocontrast(
-            Image.fromarray(
-                reconstructed_conv,
-                mode="L",
-            ),
-            0.1,
-        )
-        reconstructed = np.asarray(reconstructed_adj) / 255
+    # if auto_contrast:
+        # auto_contrast_bw(image)
 
     reconstructed = image
     # st.image(reconstructed, "Obraz po odtworzeniu")
