@@ -47,10 +47,9 @@ if file is not None:
 
     expected_image: np.ndarray
     if expected_result is not None:
-        expected_image_arr =  np.asarray(read_file(expected_result))
-        print(image_arr.shape)
-        print(expected_image_arr.shape)
-        diff = visualize_array_difference(image_arr,expected_image_arr)
+        expected_image = read_file(expected_result)
+        expected_image_arr = np.asarray(expected_image)
+        diff = visualize_array_difference(image_arr[:, :, 0],expected_image_arr)
 
     with tab1:
         st.image(pre, caption="Po wstępnym przetwarzaniu", use_container_width=True, clamp=True)
