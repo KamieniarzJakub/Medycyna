@@ -1,38 +1,44 @@
-import pydicom
 import streamlit as st
-from PIL import Image
+from PIL import Image, UnidentifiedImageError
 import gzip
 import numpy as np
 from lib import img_processing
-from lib.dicomloader import create_DICOM
-from gui.tomograf_gui import view_sliders, view_tomograf
-from gui.dicom_gui import dicom_file_gui
+from gui.dno_oka_gui import view_sliders, view_dno_oka
 import io
-from pydicom.filebase import DicomFileLike
 from lib.mse import calc_mse
-import os
 from lib.przetwarzanie import preprocess_image, segment_vessels, postprocess_image
+from lib.calc_diff import visualize_array_difference
 
-DICOM_MIME = "application/dicom"
+supported_file_types = ["jpg", "jpeg", "png", "ppm", "gz", "webp", "avif", "gif"]
 
+def read_img(fil: io.BytesIO) -> np.ndarray:
+    try:
+        return np.asarray(Image.open(fil))
+    except UnidentifiedImageError:
+        raise Exception("Błędny typ pliku: ", fil.type, ", plik: ", fil.name, ", wspierane rozszerzenia: ", supported_file_types) 
+
+def read_file(file):
+    if file.type == "application/gzip" or file.type == "application/x-gzip":
+        with gzip.open(file) as f:
+            return read_img(f)
+    else:
+        return read_img(file)
 
 st.title("Wykrywanie naczyń dna siatkówki oka")
 file = st.file_uploader(
-    "Upload an image", type=["jpg", "jpeg", "png", "dcm", "ppm", "gz"], accept_multiple_files=False
+    "Skan siatkówki oka do analizy", type=supported_file_types, accept_multiple_files=False
 )
-if file is not None:
-    file_details = {"FileName": file.name, "FileType": file.type}
 
-    image: np.ndarray
-    if file.type == "application/gzip" or file.type == "application/x-gzip":
-        with gzip.open(file) as f:
-            image = np.asarray(Image.open(f))
-    elif file.type == "application/ppm":
-        image = np.asarray(Image.open(file))
-    elif file.type=="application/octet-stream":
-        image = np.asarray(Image.open(file))
-    else:
-        raise Exception("Błędy typ pliku") 
+expected_result = st.file_uploader(
+    "[Opcjonalne] docelowy obraz naczyń", type=supported_file_types, accept_multiple_files=False
+)
+
+if file is not None:
+    image = read_file(file)
+
+    expected_image: np.ndarray
+    if expected_result is not None:
+        expected_image = read_file(expected_result)
 
     st.image(image, caption="Oryginalny obraz", use_column_width=True, clamp=True)
     tab1, tab2, tab3 = st.tabs(["Wstępne przetwarzanie", "Segmentacja naczyń", "Postprocessing"])
@@ -48,4 +54,10 @@ if file is not None:
     with tab3:
         final = postprocess_image(vessels)
         st.image(final, caption="Po końcowym przetwarzaniu", use_column_width=True, clamp=True)
-    
+
+        if expected_result is not None:
+            diff = visualize_array_difference(image,expected_image)
+            st.image(diff, "Różnica względem obrazu docelowego", clamp=True)
+
+        # mse_result = calc_mse(image / 255, reconstructed)
+        # st.text("Błąd średniokwadratowy: " + str(mse_result))
