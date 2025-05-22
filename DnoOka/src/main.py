@@ -39,7 +39,7 @@ if file is not None:
 
     params = tuple()
     with st.sidebar:
-        tab1, tab2 = st.tabs(["Parametry tomografu", "Dane DICOM"])
+        tab1, tab2 = st.tabs(["Parametry przetwarzania obrazu", "Dane DICOM"])
         dfg = dicom_file_gui(tab2, dcm_data)
     params = view_sliders(tab1)
 
