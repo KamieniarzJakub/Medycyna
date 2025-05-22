@@ -34,7 +34,7 @@ expected_result = st.file_uploader(
 )
 
 if file is not None:
-    image = read_file(file)
+    image = read_file(file).convert("RGB")
     image_arr = np.asarray(image)
 
     st.image(image, caption="Oryginalny obraz", use_container_width=True, clamp=True)
@@ -63,7 +63,8 @@ if file is not None:
         if diff is not None:
             st.image(expected_image, "Obraz docelowy", clamp=True)
 
-            st.image(diff, "Różnica względem obrazu docelowego", clamp=True)
+            img = Image.fromarray(diff, 'RGB')
+            st.image(img, "Różnica względem obrazu docelowego", clamp=True)
 
-            mse_result = (np.asarray(diff)**2).mean()
+            mse_result = (diff**2).mean()
             st.text("Błąd średniokwadratowy: " + str(mse_result))
