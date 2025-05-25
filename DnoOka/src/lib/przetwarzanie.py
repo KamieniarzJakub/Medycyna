@@ -34,7 +34,7 @@ def preprocess_image(img):
     img_sharp = cv2.addWeighted(img_blur, 1.5, gaussian, -0.5, 0)
 
     # 6. Reskalowanie intensywności (opcjonalne)
-    img_final = exposure.rescale_intensity(img_sharp, out_range=(0, 1))
+    img_final = exposure.rescale_intensity(img_sharp, out_range=(0, 1)) # type: ignore
 
     return img_final
 
@@ -43,7 +43,7 @@ def segment_vessels(img):
     # Frangi vesselness filter (or Sobel for simplicity)
     vessel = filters.frangi(
         img,
-        scale_range=(1, 5),
+        sigmas=np.arange(1,5), # type: ignore
         scale_step=1,
         alpha=0.3,
         beta=15,
@@ -51,7 +51,7 @@ def segment_vessels(img):
     )
 
     # Wzmocnienie kontrastu naczyń
-    vessel = exposure.rescale_intensity(vessel, out_range=(0, 1))
+    vessel = exposure.rescale_intensity(vessel, out_range=(0, 1)) # type: ignore
     return vessel
 
 def postprocess_image(vessels):

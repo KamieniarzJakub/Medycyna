@@ -26,7 +26,7 @@ def visualize_array_difference(array1: np.ndarray, array2: np.ndarray) -> np.nda
         print(f"Error: Input arrays must have the same shape. Got {array1.shape} and {array2.shape}")
         return None
 
-    diff_array: np.ndarray[np.int16] = (array2.astype(np.int16) - array1.astype(np.int16))
+    diff_array: np.ndarray[np.int16] = (array2.astype(np.int16) - array1.astype(np.int16)) # type: ignore
     height, width = diff_array.shape
 
     min_diff = np.min(diff_array)

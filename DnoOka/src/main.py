@@ -1,8 +1,8 @@
 import streamlit as st
+from streamlit.runtime.uploaded_file_manager import UploadedFile
 from PIL import Image, UnidentifiedImageError, ImageFile
 import gzip
 import numpy as np
-from lib import img_processing
 from gui.dno_oka_gui import view_sliders, view_dno_oka
 import io
 from lib.mse import calc_mse
@@ -11,16 +11,19 @@ from lib.calc_diff import visualize_array_difference
 
 supported_file_types = ["jpg", "jpeg", "png", "ppm", "gz", "webp", "avif", "gif"]
 
-def read_img(fil: io.BytesIO) -> ImageFile:
+def read_img(fil: io.BytesIO | UploadedFile) -> Image.Image:
     try:
         return Image.open(fil).copy()
     except UnidentifiedImageError:
-        raise Exception("Błędny typ pliku: ", fil.type, ", plik: ", fil.name, ", wspierane rozszerzenia: ", supported_file_types) 
+        if (isinstance(fil,UploadedFile)):
+            raise Exception("Błędny typ pliku: ", fil.type, ", plik: ", fil.name, ", wspierane rozszerzenia: ", supported_file_types) 
+        else:
+            raise Exception("Błędny typ pliku; plik: ", fil.name, ", wspierane rozszerzenia: ", supported_file_types) 
 
-def read_file(file: io.BytesIO) -> ImageFile:
+def read_file(file: UploadedFile) -> Image.Image:
     if file.type == "application/gzip" or file.type == "application/x-gzip":
-        with gzip.open(file) as f:
-            return read_img(f)
+        with gzip.open(file,"rb") as f:
+            return read_img(io.BytesIO(f.read()))
     else:
         return read_img(file)
 
@@ -43,9 +46,9 @@ if file is not None:
     pre = preprocess_image(image_arr / 255.0)
     vessels = segment_vessels(pre)
     final = postprocess_image(vessels)
-    diff: Image.Image | None = None
+    diff: np.ndarray | None = None
 
-    expected_image: np.ndarray
+    expected_image: Image.Image|None = None
     if expected_result is not None:
         expected_image = read_file(expected_result)
         expected_image_arr = np.asarray(expected_image)
@@ -60,7 +63,7 @@ if file is not None:
     with tab3:
         st.image(final, caption="Po końcowym przetwarzaniu", use_container_width=True, clamp=True)
 
-        if diff is not None:
+        if diff is not None and expected_image is not None:
             st.image(expected_image, "Obraz docelowy", clamp=True)
 
             img = Image.fromarray(diff, 'RGB')
