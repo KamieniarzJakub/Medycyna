@@ -1,5 +1,6 @@
 import cv2
-from skimage import exposure, filters, morphology
+from skimage import exposure, filters, morphology, measure
+from scipy import ndimage
 from PIL import ImageOps, Image
 import numpy as np
 
@@ -62,28 +63,6 @@ def postprocess_image(vessels):
     cleaned = auto_contrast_bw(cleaned)
     return cleaned
 
-# Dodawanie czarnej ramki do niekwadratowych zdjęć
-def add_borders_to_rectangle(img):
-    h, w = img.shape
-    m = max(w, h)
-    pw = (
-        (
-            np.floor((m - h) / 2, dtype=int, casting="unsafe"),
-            np.ceil((m - h) / 2, dtype=int, casting="unsafe"),
-        ),
-        (
-            np.floor((m - w) / 2, dtype=int, casting="unsafe"),
-            np.ceil((m - w) / 2, dtype=int, casting="unsafe"),
-        ),
-    )
-    return np.pad(
-        img,
-        pw,
-        "constant",
-        constant_values=(0),
-    )
-
-import numpy as np
 
 def divide_image_into_chunks(image: np.ndarray, chunk_size=(25, 25)):
     chunk_height, chunk_width = chunk_size
@@ -98,3 +77,34 @@ def divide_image_into_chunks(image: np.ndarray, chunk_size=(25, 25)):
 
 
     return np.array([padded_image[i:i + chunk_height, j:j + chunk_width] for j in range(0, padded_image.shape[1], chunk_width) for i in range(0,  padded_image.shape[0], chunk_height) ])
+
+# def sliding_window(a, window, axis=-1):
+#     shape = list(a.shape) + [window]
+#     shape[axis] -= window - 1
+#     if shape[axis] < 0:
+#         raise ValueError("Array too small")
+#     strides = a.strides + (a.strides[axis],)
+#     return np.lib.stride_tricks.as_strided(a, shape=shape, strides=strides)
+
+# def sliding_img_var(img, window):
+#     if window <= 0:
+#         raise ValueError("invalid window size")
+#     buf = sliding_window(img, 2*window, 0)
+#     buf = sliding_window(buf, 2*window, 1)
+
+#     out = np.zeros(img.shape, dtype=np.float32)
+#     np.var(buf[:-1,:-1], axis=(-1,-2), out=out[window:-window,window:-window])
+#     return out
+
+
+# def winVar(img, wlen):
+#   wmean, wsqrmean = (cv2.boxFilter(x, -1, (wlen, wlen),
+#     borderType=cv2.BORDER_REFLECT) for x in (img, img*img))
+#   return wsqrmean - wmean*wmean
+
+def get_img_params(img):
+    measure.moments_hu
+    measure.moments_central
+    # win_mean = ndimage.uniform_filter(img, (win_rows, win_cols))
+    # win_sqr_mean = ndimage.uniform_filter(img**2, (win_rows, win_cols))
+    # win_var = win_sqr_mean - win_mean**2
