@@ -82,3 +82,19 @@ def add_borders_to_rectangle(img):
         "constant",
         constant_values=(0),
     )
+
+import numpy as np
+
+def divide_image_into_chunks(image: np.ndarray, chunk_size=(25, 25)):
+    chunk_height, chunk_width = chunk_size
+
+    padding_height = (chunk_height - image.shape[0] % chunk_height) % chunk_height
+    padding_width = (chunk_width - image.shape[1] % chunk_width) % chunk_width
+
+    if image.ndim == 3:  # Kolorowe
+        padded_image = np.pad(image, ((0, padding_height), (0, padding_width), (0, 0)), mode='constant', constant_values=0)
+    else:  # czarno białe
+        padded_image = np.pad(image, ((0, padding_height), (0, padding_width)), mode='constant', constant_values=0)
+
+
+    return np.array([padded_image[i:i + chunk_height, j:j + chunk_width] for j in range(0, padded_image.shape[1], chunk_width) for i in range(0,  padded_image.shape[0], chunk_height) ])
