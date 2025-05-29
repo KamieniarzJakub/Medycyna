@@ -58,8 +58,8 @@ def segment_vessels(img):
 def postprocess_image(vessels):
     # Binary closing to connect broken vessel segments
     binary = vessels > 0.2
-    cleaned = morphology.remove_small_objects(binary, min_size=64)
-    cleaned = morphology.binary_closing(cleaned, morphology.disk(2))
+    cleaned = morphology.remove_small_objects(binary, min_size=100)
+    cleaned = morphology.binary_closing(cleaned, morphology.disk(3))
     cleaned = auto_contrast_bw(cleaned)
     return cleaned
 
@@ -78,33 +78,6 @@ def divide_image_into_chunks(image: np.ndarray, chunk_size=(25, 25)):
 
     return np.array([padded_image[i:i + chunk_height, j:j + chunk_width] for j in range(0, padded_image.shape[1], chunk_width) for i in range(0,  padded_image.shape[0], chunk_height) ])
 
-# def sliding_window(a, window, axis=-1):
-#     shape = list(a.shape) + [window]
-#     shape[axis] -= window - 1
-#     if shape[axis] < 0:
-#         raise ValueError("Array too small")
-#     strides = a.strides + (a.strides[axis],)
-#     return np.lib.stride_tricks.as_strided(a, shape=shape, strides=strides)
-
-# def sliding_img_var(img, window):
-#     if window <= 0:
-#         raise ValueError("invalid window size")
-#     buf = sliding_window(img, 2*window, 0)
-#     buf = sliding_window(buf, 2*window, 1)
-
-#     out = np.zeros(img.shape, dtype=np.float32)
-#     np.var(buf[:-1,:-1], axis=(-1,-2), out=out[window:-window,window:-window])
-#     return out
-
-
-# def winVar(img, wlen):
-#   wmean, wsqrmean = (cv2.boxFilter(x, -1, (wlen, wlen),
-#     borderType=cv2.BORDER_REFLECT) for x in (img, img*img))
-#   return wsqrmean - wmean*wmean
-
 def get_img_params(img):
     measure.moments_hu
     measure.moments_central
-    # win_mean = ndimage.uniform_filter(img, (win_rows, win_cols))
-    # win_sqr_mean = ndimage.uniform_filter(img**2, (win_rows, win_cols))
-    # win_var = win_sqr_mean - win_mean**2
