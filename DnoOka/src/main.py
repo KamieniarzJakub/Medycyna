@@ -5,6 +5,8 @@ import gzip
 import numpy as np
 import io
 
+import matplotlib.pyplot as plt
+
 from gui.dno_oka_gui import view_sliders, view_dno_oka
 from lib.mse import calc_mse
 from lib.przetwarzanie import preprocess_image, segment_vessels, postprocess_image, divide_image_into_chunks
@@ -16,7 +18,7 @@ from sklearn.metrics import classification_report
 
 from sklearn.model_selection import train_test_split
 
-supported_file_types = ["jpg", "jpeg", "png", "ppm", "gz", "webp", "avif", "gif"]
+supported_file_types = ["jpg", "jpeg", "png", "ppm", "gz", "webp", "avif", "gif", "tif"]
 
 def read_img(fil: io.BytesIO | UploadedFile) -> Image.Image:
     try:
